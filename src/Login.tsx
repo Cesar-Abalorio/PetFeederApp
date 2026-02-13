@@ -1,5 +1,5 @@
 import { useState } from "react";
-import "./login.css";
+import "./Login.css";
 import logo from "./assets/logo.jpg";
 
 export default function Login() {
