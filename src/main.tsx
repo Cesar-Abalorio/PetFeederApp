@@ -5,7 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <BrowserRouter basename="/PetFeederApp/">
+    <BrowserRouter basename= {import.meta.env.BASE_URL}>
       <Routes>
         <Route path="/" element={<Login />} />
       </Routes>
