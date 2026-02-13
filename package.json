@@ -1,5 +1,5 @@
 {
-  "homepage": "http://Cesar-Abalorio.github.io/PetFeederApp",
+  "homepage": "http://cesar-abalorio.github.io/PetFeederApp",
   "name": "petfeederapp",
   "private": true,
   "version": "0.0.0",
@@ -9,7 +9,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "predeploy": "expo export -p web",
+    "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
