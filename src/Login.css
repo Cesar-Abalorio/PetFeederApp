@@ -35,7 +35,8 @@ body {
 
 
 .input {
-  border: 2px solid #2aa8a1;     
+  width: 100%;
+  border: 2px solid #2aa8a1;
   border-radius: 12px;
   padding: 14px;
   margin-bottom: 18px;
@@ -96,4 +97,25 @@ body {
   text-decoration: underline;
   color: #333;
   cursor: pointer;
+}
+
+.usernameWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.passwordWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.toggle {
+  position: absolute;
+  right: 10px;
+  top: 18px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #2aa8a1;
 }
