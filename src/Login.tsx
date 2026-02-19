@@ -3,12 +3,15 @@ import "./Login.css";
 import logo from "./assets/logo.jpg";
 import InputField from "../components/InputField";
 import Button from "../components/Button";
+import { useNavigate } from "react-router-dom";
+
 
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false); 
+  const navigate = useNavigate();
 
   const handleLogin = () => {
     if (!username || !password) {
@@ -22,7 +25,7 @@ export default function Login() {
   return (
     <div className="container">
       <img src={logo} alt="Logo" className="logo" />
-
+      
       <h3 className="title">Log in to your Account</h3>
       
       <div className="usernameWrapper">
@@ -63,7 +66,9 @@ export default function Login() {
 
       <Button text="Sign in" onClick={handleLogin} />
 
-      <p className="create">Create Account</p>
+      <p className="create" onClick={() => navigate("/signup")}>
+  Create Account
+</p>
     </div>
   );
 }
