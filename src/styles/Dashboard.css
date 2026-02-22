@@ -1,0 +1,51 @@
+
+
+.dashboardContainer {
+  padding: 40px;
+  background-color: #f4f6f8;
+  min-height: 100vh;
+}
+
+
+.dashboardTitle {
+  font-size: 24px;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+
+
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 25px;
+}
+
+
+
+.dashboardCard {
+  background-color: white;
+  padding: 25px;
+  border-radius: 14px;
+  border-left: 6px solid #2aa8a1;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.06);
+  transition: 0.2s ease;
+}
+
+.dashboardCard:hover {
+  transform: translateY(-4px);
+}
+
+
+.cardLabel {
+  font-size: 14px;
+  color: #777;
+  margin-bottom: 8px;
+}
+
+
+.cardValue {
+  font-size: 28px;
+  font-weight: bold;
+  color: #2e2e2e;
+}

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import "./Login.css";
-import logo from "./assets/logo.jpg";
+import "../styles/Login.css";
+import logo from "../assets/logo.jpg";
 import InputField from "../components/InputField";
 import Button from "../components/Button";
 import { useNavigate } from "react-router-dom";
@@ -14,13 +14,17 @@ export default function Login() {
   const navigate = useNavigate();
 
   const handleLogin = () => {
-    if (!username || !password) {
-      alert("Please fill in all fields.");
-      return;
-    }
+  if (!username || !password) {
+    alert("Please fill in all fields.");
+    return;
+  }
 
-    alert("Login Successful!");
-  };
+  if (username === "admin" && password === "1234") {
+    navigate("/dashboard");  
+  } else {
+    alert("Invalid credentials");
+  }
+};
 
   return (
     <div className="container">

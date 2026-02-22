@@ -1,12 +1,17 @@
-import { Routes, Route, } from "react-router-dom";
-import Login from "./Login";
-import Signup from "./Signup";
+import { Routes, Route } from "react-router-dom";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Dashboard from "./pages/Dashboard";
+import Schedule from "./pages/Schedule";
+
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/schedule" element={<Schedule />} />
     </Routes>
   );
 }

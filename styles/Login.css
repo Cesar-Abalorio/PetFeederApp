@@ -36,7 +36,7 @@ body {
 
 .input {
   width: 100%;
-  border: 2px solid #2aa8a1;
+  border: 2px solid #a82a2a;
   border-radius: 12px;
   padding: 14px;
   margin-bottom: 18px;
@@ -48,7 +48,7 @@ body {
 
 
 .input:focus {
-  border-color: #1e8f89;
+  border-color: #8f1e1e;
   box-shadow: 0 0 6px rgba(42, 168, 161, 0.4);
 }
 
