@@ -23,26 +23,49 @@ export default function Signup() {
     setStrength(checkStrength(value));
   };
 
-  const handleSignup = () => {
-    if (!email.includes("@")) {
-      setError("Please enter a valid email address.");
+ const handleSignup = () => {
+  if (!email.includes("@")) {
+    setError("Please enter a valid email address.");
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    setError("Passwords do not match.");
+    return;
+  }
+
+  if (strength === "Weak") {
+    setError("Password is too weak.");
+    return;
+  }
+
+  try {
+    // Get existing users or empty array
+    const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
+
+    // Check duplicate
+    const userExists = existingUsers.some(
+      (user: any) => user.email === email
+    );
+
+    if (userExists) {
+      setError("Account already exists.");
       return;
     }
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
+    const newUser = { email, password };
 
-    if (strength === "Weak") {
-      setError("Password is too weak.");
-      return;
-    }
+    localStorage.setItem(
+      "users",
+      JSON.stringify([...existingUsers, newUser])
+    );
 
-    setError("");
     alert("Account Created Successfully!");
     navigate("/");
-  };
+  } catch (error) {
+    console.error("Signup error:", error);
+  }
+};
 
   return (
     <div className="container">

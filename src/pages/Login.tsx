@@ -19,8 +19,25 @@ export default function Login() {
     return;
   }
 
+  
   if (username === "admin" && password === "1234") {
-    navigate("/dashboard");  
+    localStorage.setItem("currentUser", "admin");
+    navigate("/dashboard");
+    return;
+  }
+
+  
+  const users = JSON.parse(localStorage.getItem("users") || "[]");
+
+  const validUser = users.find(
+  (user: any) =>
+    user.email.trim() === username.trim() &&
+    user.password === password
+);
+
+  if (validUser) {
+    localStorage.setItem("currentUser", validUser.email);
+    navigate("/dashboard");
   } else {
     alert("Invalid credentials");
   }
@@ -34,7 +51,7 @@ export default function Login() {
       
       <div className="usernameWrapper">
         <InputField
-          placeholder="Username"
+          placeholder="Email Address"
           value={username}
           onChange={setUsername}
         />
