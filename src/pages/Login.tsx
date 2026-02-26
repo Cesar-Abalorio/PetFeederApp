@@ -17,27 +17,29 @@ export default function Login() {
   if (!username || !password) {
     alert("Please fill in all fields.");
     return;
+    
   }
 
-  
+  // Admin login
   if (username === "admin" && password === "1234") {
     localStorage.setItem("currentUser", "admin");
+    localStorage.setItem("role", "admin");
     navigate("/dashboard");
     return;
   }
 
-  
   const users = JSON.parse(localStorage.getItem("users") || "[]");
 
   const validUser = users.find(
-  (user: any) =>
-    user.email.trim() === username.trim() &&
-    user.password === password
-);
+    (user: any) =>
+      user.email.trim() === username.trim() &&
+      user.password === password
+  );
 
   if (validUser) {
     localStorage.setItem("currentUser", validUser.email);
-    navigate("/dashboard");
+    localStorage.setItem("role", "user");
+    navigate("/user");
   } else {
     alert("Invalid credentials");
   }

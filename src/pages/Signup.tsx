@@ -40,10 +40,10 @@ export default function Signup() {
   }
 
   try {
-    // Get existing users or empty array
+   
     const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
 
-    // Check duplicate
+    
     const userExists = existingUsers.some(
       (user: any) => user.email === email
     );
