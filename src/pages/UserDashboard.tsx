@@ -9,12 +9,33 @@ export default function UserDashboard() {
   const [foodLevel, setFoodLevel] = useState(100);
   const [lastFed, setLastFed] = useState("Not yet");
   const [deviceStatus] = useState("Online");
-
   const [notifications, setNotifications] = useState<string[]>([]);
   const [scheduleTime, setScheduleTime] = useState("");
   const [lastTriggeredMinute, setLastTriggeredMinute] = useState("");
   const [schedules, setSchedules] = useState<string[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
 
+  const addFeedLog = (
+  type: "Manual" | "Scheduled",
+  status: "Success" | "Failed",
+  foodAfter: number
+) => {
+  const existingLogs =
+    JSON.parse(localStorage.getItem("feedingLogs") || "[]");
+
+  const newLog = {
+    id: Date.now(),
+    time: new Date().toLocaleString(),
+    user: user,
+    type,
+    foodAfter,
+    status,
+  };
+
+  const updatedLogs = [newLog, ...existingLogs];
+
+  localStorage.setItem("feedingLogs", JSON.stringify(updatedLogs));
+};
 
   const handleAddSchedule = () => {
   if (!scheduleTime) return;
@@ -35,15 +56,17 @@ export default function UserDashboard() {
   addNotification("🗑 Schedule removed.");
     };
 
-  // 🔔 Add Notification
+  //  Add Notification
   const addNotification = (message: string) => {
     setNotifications((prev) => [message, ...prev]);
   };
-
-  // 🕒 Manual Feed
+  
+  //  Manual Feed
   const handleManualFeed = () => {
-    if (foodLevel <= 0) {
-      addNotification("❌ Cannot feed. No food available.");
+    if (foodLevel > 0) {
+      addFeedLog("Manual", "Success", foodLevel - 5);
+    }else {
+      addFeedLog("Manual", "Failed", foodLevel);
       return;
     }
 
@@ -54,7 +77,7 @@ export default function UserDashboard() {
     addNotification("✅ Manual feeding successful at " + now);
   };
 
-  // 🕒 Scheduled Feed Checker (runs every second)
+  //  Scheduled Feed Checker (runs every second)
   useEffect(() => {
   const interval = setInterval(() => {
     const now = new Date();
@@ -67,11 +90,18 @@ export default function UserDashboard() {
         currentMinute !== lastTriggeredMinute
       ) {
         if (foodLevel > 0) {
+          const newFoodLevel = foodLevel - 5;
+
           setLastFed(now.toLocaleTimeString());
-          setFoodLevel((prev) => prev - 5);
+          setFoodLevel(newFoodLevel);
+
           addNotification(`⏰ Scheduled feeding at ${time}`);
+
+          addFeedLog("Scheduled", "Success", newFoodLevel);
         } else {
           addNotification("❌ Scheduled feeding failed. No food.");
+
+          addFeedLog("Scheduled", "Failed", foodLevel);
         }
 
         setLastTriggeredMinute(currentMinute);
@@ -98,7 +128,7 @@ useEffect(() => {
   }
 }, [schedules, user]);
 
-  // ⚠ Low Food Alerts
+  //  Low Food Alerts
   useEffect(() => {
     if (foodLevel <= 20 && foodLevel > 0) {
       addNotification("⚠️ Food level is low!");
@@ -115,13 +145,30 @@ useEffect(() => {
   };
 
   return (
-    <div className="userContainer">
+  <div className="dashboardWrapper">
+
+    {/* MAIN CONTENT */}
+    <div className="mainContent">
       <div className="userHeader">
-        <h2>Welcome, {user}</h2>
+  <h2>Welcome, {user}</h2>
+
+  <div className="profileWrapper">
+    <button
+      className="profileButton"
+      onClick={() => setShowDropdown(!showDropdown)}
+    >
+      {user} ⌄
+    </button>
+
+    {showDropdown && (
+      <div className="dropdownMenu">
         <button onClick={handleLogout}>Logout</button>
       </div>
+    )}
+    </div>
+  </div>
 
-      {/* LIVE STATUS */}
+      {/* Live Status */}
       <div className="userCard">
         <h3>Live Feeder Status</h3>
         <p><strong>Device Status:</strong> {deviceStatus}</p>
@@ -129,57 +176,54 @@ useEffect(() => {
         <p><strong>Food Level:</strong> {foodLevel}%</p>
       </div>
 
-      {/* MANUAL FEED */}
-      <div className="userCard">
+      {/* Manual Feed */}
+      <div className="userCard manualFeedCard">
         <h3>Manual Feed Control</h3>
-        <button onClick={handleManualFeed}>
+
+        < button onClick={handleManualFeed} className="manualFeedButton">
           Dispense Food Now
         </button>
       </div>
 
-      {/* SCHEDULE FEED */}
+      {/* Schedule */}
       <div className="userCard">
-  <h3>Feeding Schedule</h3>
+        <h3>Feeding Schedule</h3>
 
-  <div className="scheduleInputRow">
-    <input
-      type="time"
-      value={scheduleTime}
-      onChange={(e) => setScheduleTime(e.target.value)}
-    />
-    <button onClick={handleAddSchedule}>
-      Add
-    </button>
-  </div>
+        <div className="scheduleInputRow">
+          <input
+            type="time"
+            value={scheduleTime}
+            onChange={(e) => setScheduleTime(e.target.value)}
+          />
+          <button onClick={handleAddSchedule}>Add</button>
+        </div>
 
-  {schedules.length === 0 && (
-    <p>No schedules added.</p>
-  )}
-
-    {schedules.map((time, index) => (
-    <div key={index} className="scheduleItem">
-      <span>{time}</span>
-      <button onClick={() => handleRemoveSchedule(time)}>
-        Remove
-      </button>
-    </div>
-  ))}
-    </div>
-
-      {/* NOTIFICATIONS */}
-      <div className="userCard">
-        <h3>Notification Alerts</h3>
-
-        {notifications.length === 0 && (
-          <p>No notifications yet.</p>
-        )}
-
-        {notifications.map((note, index) => (
-          <div key={index} className="notificationItem">
-            {note}
+        {schedules.map((time, index) => (
+          <div key={index} className="scheduleItem">
+            <span>{time}</span>
+            <button onClick={() => handleRemoveSchedule(time)}>
+              Remove
+            </button>
           </div>
         ))}
       </div>
     </div>
+
+    {/*  SIDE NOTIFICATION PANEL */}
+    <div className="notificationPanel">
+      <h3>Notification Alerts</h3>
+
+      {notifications.length === 0 && (
+        <p className="noNotification">No alerts yet.</p>
+      )}
+
+      {notifications.map((note, index) => (
+        <div key={index} className="notificationItem">
+          {note}
+        </div>
+      ))}
+    </div>
+
+  </div>
   );
 }
