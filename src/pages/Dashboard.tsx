@@ -6,7 +6,7 @@ export default function Dashboard() {
   const [feedsToday] = useState(5);
   const [devicesOnline] = useState(3);
   const [alerts] = useState(1);
-
+  
   return (
     <>
       <Navbar />

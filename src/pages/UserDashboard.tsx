@@ -72,7 +72,7 @@ export default function UserDashboard() {
 
     const now = new Date().toLocaleTimeString();
     setLastFed(now);
-    setFoodLevel((prev) => prev - 5);
+    setFoodLevel((prev) => Math.max(prev - 5, 0));
 
     addNotification("✅ Manual feeding successful at " + now);
   };
@@ -90,7 +90,7 @@ export default function UserDashboard() {
         currentMinute !== lastTriggeredMinute
       ) {
         if (foodLevel > 0) {
-          const newFoodLevel = foodLevel - 5;
+          const newFoodLevel = Math.max(foodLevel - 5, 0);
 
           setLastFed(now.toLocaleTimeString());
           setFoodLevel(newFoodLevel);
@@ -173,7 +173,16 @@ useEffect(() => {
         <h3>Live Feeder Status</h3>
         <p><strong>Device Status:</strong> {deviceStatus}</p>
         <p><strong>Last Feeding:</strong> {lastFed}</p>
-        <p><strong>Food Level:</strong> {foodLevel}%</p>
+        <p><strong>Food Level:</strong></p>
+
+<div className="foodBar">
+  <div 
+    className={`foodFill ${foodLevel <= 20 ? "low" : ""}`}
+    style={{ width: `${foodLevel}%` }}
+  ></div>
+</div>
+
+<span className="foodPercent">{foodLevel}%</span>
       </div>
 
       {/* Manual Feed */}
