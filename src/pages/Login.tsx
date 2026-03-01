@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "../styles/Login.css";
-import logo from "../assets/logo.jpg";
+import logo from "../assets/Logo.png";
 import InputField from "../components/InputField";
 import Button from "../components/Button";
 import { useNavigate } from "react-router-dom";
