@@ -8,12 +8,28 @@ export default function UserDashboard() {
 
   const [foodLevel, setFoodLevel] = useState(100);
   const [lastFed, setLastFed] = useState("Not yet");
-  const [deviceStatus] = useState("Online");
-  const [notifications, setNotifications] = useState<string[]>([]);
+  const [deviceStatus, setDeviceStatus] = useState<"Online" | "Offline">("Online");
+  const [lastOnlineTime, setLastOnlineTime] = useState<string | null>(null);  const [notifications, setNotifications] = useState<string[]>([]);
   const [scheduleTime, setScheduleTime] = useState("");
   const [lastTriggeredMinute, setLastTriggeredMinute] = useState("");
   const [schedules, setSchedules] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
+  
+
+  useEffect(() => {
+  const interval = setInterval(() => {
+    const random = Math.random();
+
+    if (random < 0.1) { 
+      setDeviceStatus("Offline");
+      setLastOnlineTime(new Date().toLocaleString());
+    } else {
+      setDeviceStatus("Online");
+    }
+  }, 15000);
+
+  return () => clearInterval(interval);
+}, []);
 
   const addFeedLog = (
   type: "Manual" | "Scheduled",
@@ -171,8 +187,18 @@ useEffect(() => {
       {/* Live Status */}
       <div className="userCard">
         <h3>Live Feeder Status</h3>
-        <p><strong>Device Status:</strong> {deviceStatus}</p>
-        <p><strong>Last Feeding:</strong> {lastFed}</p>
+<p>
+  <strong>Device Status:</strong>{" "}
+  <span className={`statusIndicator ${deviceStatus === "Online" ? "online" : "offline"}`}>
+    ● {deviceStatus}
+  </span>
+</p>
+
+{deviceStatus === "Offline" && lastOnlineTime && (
+  <p className="lastOnline">
+    Last Online: {lastOnlineTime}
+  </p>
+)}        <p><strong>Last Feeding:</strong> {lastFed}</p>
         <p><strong>Food Level:</strong></p>
 
 <div className="foodBar">

@@ -285,3 +285,22 @@
   color: #374151;
   font-weight: 500;
 }
+
+.statusIndicator {
+  font-weight: 600;
+  margin-left: 5px;
+}
+
+.online {
+  color: #16a34a;
+}
+
+.offline {
+  color: #dc2626;
+}
+
+.lastOnline {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 4px;
+}
