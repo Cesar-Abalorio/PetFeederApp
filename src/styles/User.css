@@ -142,8 +142,7 @@
 .dashboardWrapper {
   display: flex;
   min-height: 100vh;
-  flex-direction: row-reverse;
-    
+  flex-direction: row-reverse;  
 }
 
 
@@ -152,6 +151,13 @@
   padding: 40px;
 }
 
+.mainFooter {
+  text-align: center;
+  padding: 15px;
+  background: #f1f5f9;
+  border-top: 1px solid #e2e8f0;
+  font-size: 13px;
+}
 
 .notificationPanel {
   flex: 1;
@@ -303,4 +309,36 @@
   font-size: 13px;
   color: #6b7280;
   margin-top: 4px;
+}
+
+.userHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 25px;
+  background: linear-gradient(90deg, #0f766e, #14b8a6);
+  border-radius: 12px;
+  color: white;
+  margin-bottom: 20px;
+}
+
+.headerLeft h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.headerLeft p {
+  margin: 4px 0 0 0;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.profileButton {
+  background: white;
+  color: #0f766e;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
 }

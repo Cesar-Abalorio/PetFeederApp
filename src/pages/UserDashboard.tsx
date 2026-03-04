@@ -165,8 +165,11 @@ useEffect(() => {
 
     {/* MAIN CONTENT */}
     <div className="mainContent">
-      <div className="userHeader">
-  <h2>Welcome, {user}</h2>
+    <div className="userHeader">
+  <div className="headerLeft">
+    <h1>Smart Pet Feeder System</h1>
+    <p>Welcome, {user}</p>
+  </div>
 
   <div className="profileWrapper">
     <button
@@ -181,8 +184,8 @@ useEffect(() => {
         <button onClick={handleLogout}>Logout</button>
       </div>
     )}
-    </div>
   </div>
+</div>
 
       {/* Live Status */}
       <div className="userCard">
