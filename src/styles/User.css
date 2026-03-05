@@ -226,7 +226,7 @@
 
 .scheduleItem button {
   background: #dc2626;
-  padding: 6px 10px;
+  padding: 8px 10px;
   border-radius: 6px;
 }
 
@@ -263,7 +263,7 @@
 
 .foodFill {
   height: 100%;
-  background: #2563eb;
+  background: #14b8a6;
   transition: width 0.3s ease;
 }
 
