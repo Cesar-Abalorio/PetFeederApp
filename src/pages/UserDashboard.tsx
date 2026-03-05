@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/User.css";
+import Bg from ".Bg.png";
 
 export default function UserDashboard() {
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ export default function UserDashboard() {
   const [lastTriggeredMinute, setLastTriggeredMinute] = useState("");
   const [schedules, setSchedules] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
-  
+  const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
   const interval = setInterval(() => {
@@ -171,6 +172,35 @@ useEffect(() => {
     <p>Welcome, {user}</p>
   </div>
 
+  <div className="headerRight">
+
+  {/* Notification Dropdown */}
+  <div className="notificationWrapper">
+    <button
+      className="notificationButton"
+      onClick={() => setShowNotifications(!showNotifications)}
+    >
+      🔔 ({notifications.length})
+    </button>
+
+    {showNotifications && (
+      <div className="notificationDropdown">
+        <h4>Notifications</h4>
+
+        {notifications.length === 0 && (
+          <p className="noNotification">No alerts yet.</p>
+        )}
+
+        {notifications.map((note, index) => (
+          <div key={index} className="notificationItem">
+            {note}
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+
+  {/* Profile Dropdown */}
   <div className="profileWrapper">
     <button
       className="profileButton"
@@ -185,6 +215,8 @@ useEffect(() => {
       </div>
     )}
   </div>
+
+</div>
 </div>
 
       {/* Live Status */}
@@ -247,20 +279,6 @@ useEffect(() => {
       </div>
     </div>
 
-    {/*  SIDE NOTIFICATION PANEL */}
-    <div className="notificationPanel">
-      <h3>Notification Alerts</h3>
-
-      {notifications.length === 0 && (
-        <p className="noNotification">No alerts yet.</p>
-      )}
-
-      {notifications.map((note, index) => (
-        <div key={index} className="notificationItem">
-          {note}
-        </div>
-      ))}
-    </div>
       <div className="mainFooter">
   <p>© {new Date().getFullYear()} Smart Pet Feeder System</p>
   <p>Developed by BSIT Students</p>
