@@ -260,7 +260,11 @@
 
 .scheduleItem button {
   background: #dc2626;
+<<<<<<< HEAD
   padding: 6px 12px;
+=======
+  padding: 8px 10px;
+>>>>>>> 997ff03a898c383dd2090ce0daab85bab2a9a254
   border-radius: 6px;
   color: white;
   border: none;
@@ -301,7 +305,11 @@
 
 .foodFill {
   height: 100%;
+<<<<<<< HEAD
   background: #2aa8a1;
+=======
+  background: #14b8a6;
+>>>>>>> 997ff03a898c383dd2090ce0daab85bab2a9a254
   transition: width 0.3s ease;
 }
 
