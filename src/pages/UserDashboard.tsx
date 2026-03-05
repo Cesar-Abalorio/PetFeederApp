@@ -261,7 +261,10 @@ useEffect(() => {
         </div>
       ))}
     </div>
-
+      <div className="mainFooter">
+  <p>© {new Date().getFullYear()} Smart Pet Feeder System</p>
+  <p>Developed by BSIT Students</p>
+</div>
   </div>
   );
 }

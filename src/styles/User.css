@@ -142,7 +142,9 @@
 .dashboardWrapper {
   display: flex;
   min-height: 100vh;
-  flex-direction: row-reverse;  
+  flex-direction: row-reverse;
+  padding-bottom: 70px;
+  position: relative;
 }
 
 
@@ -152,10 +154,14 @@
 }
 
 .mainFooter {
-  text-align: center;
-  padding: 15px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
   background: #f1f5f9;
   border-top: 1px solid #e2e8f0;
+  text-align: center;
+  padding: 12px;
   font-size: 13px;
 }
 
