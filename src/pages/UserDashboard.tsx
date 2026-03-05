@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/User.css";
-import Bg from ".Bg.png";
 
 export default function UserDashboard() {
   const navigate = useNavigate();
