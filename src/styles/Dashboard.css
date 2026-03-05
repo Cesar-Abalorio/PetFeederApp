@@ -1,50 +1,210 @@
-
+/* ============================= */
+/* DASHBOARD CONTAINER */
+/* ============================= */
 .dashboardContainer {
-  padding: 40px;
+  padding: 40px 30px;
   background-color: #f4f6f8;
-  min-height: 100vh;
+  min-height: calc(100vh - 70px);
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
+/* ============================= */
+/* DASHBOARD HEADER */
+/* ============================= */
+.dashboardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e5e7eb;
+}
 
 .dashboardTitle {
-  font-size: 24px;
-  margin-bottom: 30px;
-  color: #333;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #1f2937;
 }
 
+.dashboardSubtitle {
+  font-size: 14px;
+  color: #888;
+  margin: 0;
+}
 
+.lastUpdated {
+  font-size: 12px;
+  color: #aaa;
+  background: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border-left: 3px solid #2aa8a1;
+}
 
+/* ============================= */
+/* STATS SECTIONS */
+/* ============================= */
+.statsSection {
+  margin-bottom: 40px;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2e2e2e;
+  margin-bottom: 20px;
+  padding-left: 12px;
+  border-left: 4px solid #2aa8a1;
+}
+
+/* ============================= */
+/* DASHBOARD GRID */
+/* ============================= */
 .dashboardGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 25px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
 }
 
+@media (max-width: 1200px) {
+  .dashboardGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
 
+@media (max-width: 768px) {
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+  }
+}
 
+/* ============================= */
+/* DASHBOARD CARD */
+/* ============================= */
 .dashboardCard {
   background-color: white;
-  padding: 25px;
-  border-radius: 14px;
-  border-left: 6px solid #2aa8a1;
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.06);
-  transition: 0.2s ease;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #e5e7eb;
 }
 
 .dashboardCard:hover {
   transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
 }
 
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
 
 .cardLabel {
-  font-size: 14px;
-  color: #777;
-  margin-bottom: 8px;
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
+.cardIcon {
+  font-size: 24px;
+  opacity: 0.7;
+}
 
 .cardValue {
-  font-size: 28px;
-  font-weight: bold;
-  color: #2e2e2e;
+  font-size: 36px;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Color Variants */
+.cardValue.blue {
+  color: #3b82f6;
+}
+
+.cardIcon.blue {
+  color: #3b82f6;
+}
+
+.cardValue.teal {
+  color: #2aa8a1;
+}
+
+.cardIcon.teal {
+  color: #2aa8a1;
+}
+
+.cardValue.green {
+  color: #10b981;
+}
+
+.cardIcon.green {
+  color: #10b981;
+}
+
+.cardValue.orange {
+  color: #f59e0b;
+}
+
+.cardIcon.orange {
+  color: #f59e0b;
+}
+
+.cardValue.success {
+  color: #059669;
+}
+
+.cardIcon.success {
+  color: #059669;
+}
+
+.cardValue.warning {
+  color: #f59e0b;
+}
+
+.cardIcon.warning {
+  color: #f59e0b;
+}
+
+.cardValue.danger {
+  color: #ef4444;
+}
+
+.cardIcon.danger {
+  color: #ef4444;
+}
+
+.cardValue.info {
+  color: #06b6d4;
+}
+
+.cardIcon.info {
+  color: #06b6d4;
+}
+
+.cardValue.purple {
+  color: #8b5cf6;
+}
+
+.cardIcon.purple {
+  color: #8b5cf6;
+}
+
+.cardValue.pink {
+  color: #ec4899;
+}
+
+.cardIcon.pink {
+  color: #ec4899;
+}
+
+/* Subtle background tint for icons */
+.dashboardCard {
+  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
 }

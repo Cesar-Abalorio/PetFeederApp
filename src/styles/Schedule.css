@@ -1,40 +1,326 @@
+/* ============================= */
+/* SCHEDULE CONTAINER */
+/* ============================= */
 .scheduleContainer {
-  padding: 40px;
+  padding: 40px 30px;
+  max-width: 1400px;
+  margin: 0 auto;
+  background-color: #f4f6f8;
+  min-height: calc(100vh - 70px);
+}
+
+/* ============================= */
+/* SCHEDULE HEADER */
+/* ============================= */
+.scheduleHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 35px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e5e7eb;
 }
 
 .scheduleTitle {
-  font-size: 22px;
-  font-weight: 600;
-  margin-bottom: 30px;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #1f2937;
 }
 
-.historyTable {
+.scheduleSubtitle {
+  font-size: 14px;
+  color: #888;
+  margin: 0;
+}
+
+.feedingCount {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  border-left: 3px solid #2aa8a1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.countLabel {
+  font-size: 13px;
+  color: #888;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.countValue {
+  font-size: 24px;
+  font-weight: 700;
+  color: #2aa8a1;
+}
+
+/* ============================= */
+/* TABLE WRAPPER */
+/* ============================= */
+.tableWrapper {
   background: white;
   border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
 }
 
-.historyRow {
+/* ============================= */
+/* TABLE HEADER */
+/* ============================= */
+.tableHeader {
   display: grid;
-  grid-template-columns: 2fr 2fr 1fr 1fr 1fr;
-  padding: 12px 0;
-  border-bottom: 1px solid #eee;
+  grid-template-columns: 1.2fr 1.5fr 1.5fr 1.2fr 1.2fr 1.5fr 1.2fr;
+  gap: 15px;
+  padding: 18px 25px;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border-bottom: 2px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.headerCell {
+  font-size: 12px;
+  font-weight: 700;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+}
+
+/* ============================= */
+/* TABLE ROWS */
+/* ============================= */
+.tableRow {
+  display: grid;
+  grid-template-columns: 1.2fr 1.5fr 1.5fr 1.2fr 1.2fr 1.5fr 1.2fr;
+  gap: 15px;
+  padding: 16px 25px;
+  border-bottom: 1px solid #e5e7eb;
+  align-items: center;
+  transition: background-color 0.2s ease;
+}
+
+.tableRow:hover {
+  background-color: #f9fafb;
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.tableCell {
   font-size: 14px;
+  color: #374151;
 }
 
-.statusSuccess {
-  color: green;
+/* ============================= */
+/* COLUMN STYLES */
+/* ============================= */
+.timeCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.timeValue {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.dateValue {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.emailCell {
+  font-family: "Courier New", monospace;
+  font-size: 13px;
+  color: #555;
+  word-break: break-all;
+}
+
+.nameCell {
+  font-weight: 500;
+}
+
+.nameTag {
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 4px 10px;
+  border-radius: 6px;
+  display: inline-block;
   font-weight: 600;
 }
 
-.statusFailed {
-  color: red;
+.deviceCell {
+  font-weight: 500;
+  color: #2aa8a1;
+}
+
+/* ============================= */
+/* ACTION BADGES */
+/* ============================= */
+.actionCell {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.actionBadge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-block;
+}
+
+.actionBadge.manual {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.actionBadge.scheduled {
+  background: #d1fae5;
+  color: #059669;
+}
+
+/* ============================= */
+/* FOOD LEVEL */
+/* ============================= */
+.foodCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.foodLevelContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.foodBar {
+  flex: 1;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.foodFill {
+  height: 100%;
+  background: #2aa8a1;
+  transition: width 0.3s ease;
+}
+
+.foodFill.low {
+  background: #ef4444;
+}
+
+.foodPercent {
+  font-size: 12px;
   font-weight: 600;
+  color: #374151;
+  min-width: 40px;
+}
+
+/* ============================= */
+/* STATUS BADGES */
+/* ============================= */
+.statusCell {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.statusBadge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 6px;
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statusBadge.success {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.statusBadge.failed {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* ============================= */
+/* EMPTY STATE */
+/* ============================= */
+.emptyState {
+  padding: 60px 20px;
+  text-align: center;
 }
 
 .emptyText {
-  text-align: center;
-  padding: 20px;
-  color: #888;
+  color: #999;
+  font-size: 16px;
+  margin: 0;
+}
+
+/* ============================= */
+/* RESPONSIVE DESIGN */
+/* ============================= */
+@media (max-width: 1024px) {
+  .tableHeader,
+  .tableRow {
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  }
+
+  .nameCell,
+  .deviceCell {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .scheduleContainer {
+    padding: 20px 10px;
+  }
+
+  .scheduleHeader {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .tableHeader {
+    grid-template-columns: 1fr 1fr 1fr;
+    padding: 12px 15px;
+    gap: 8px;
+  }
+
+  .tableRow {
+    grid-template-columns: 1fr 1fr 1fr;
+    padding: 12px 15px;
+    gap: 8px;
+  }
+
+  .emailCell,
+  .actionCell,
+  .foodCell {
+    display: none;
+  }
+
+  .statusBadge {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
 }

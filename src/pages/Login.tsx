@@ -46,11 +46,13 @@ export default function Login() {
 };
 
   return (
-    <div className="container">
+  <div className="container">
+    <div className="loginCard">
+
       <img src={logo} alt="Logo" className="logo" />
-      
+
       <h3 className="title">Log in to your Account</h3>
-      
+
       <div className="usernameWrapper">
         <InputField
           placeholder="Email Address"
@@ -58,7 +60,7 @@ export default function Login() {
           onChange={setUsername}
         />
       </div>
-      
+
       <div className="passwordWrapper">
         <InputField
           type={showPassword ? "text" : "password"}
@@ -73,7 +75,7 @@ export default function Login() {
           {showPassword ? "Hide" : "Show"}
         </span>
       </div>
-      
+
       <div className="row">
         <div className="rememberRow">
           <input
@@ -90,8 +92,10 @@ export default function Login() {
       <Button text="Sign in" onClick={handleLogin} />
 
       <p className="create" onClick={() => navigate("/signup")}>
-  Create Account
-</p>
+        Create Account
+      </p>
+
     </div>
-  );
+  </div>
+);
 }

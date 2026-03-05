@@ -1,0 +1,93 @@
+/* ============================= */
+/* PROFILE CONTAINER */
+/* ============================= */
+.profileContainer {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #f4f6f8 0%, #e9ecef 100%);
+  padding: 30px;
+}
+
+/* ============================= */
+/* PROFILE CARD */
+/* ============================= */
+.profileCard {
+  width: 100%;
+  max-width: 450px;
+  background: white;
+  padding: 45px;
+  border-radius: 14px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+  text-align: center;
+}
+
+.profileCard h2 {
+  margin-bottom: 30px;
+  font-size: 26px;
+  color: #2e2e2e;
+  font-weight: 600;
+}
+
+/* ============================= */
+/* INPUTS */
+/* ============================= */
+.profileInput {
+  width: 100%;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border-radius: 10px;
+  border: 2px solid #2aa8a1;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.profileInput:focus {
+  border-color: #1e8f89;
+  box-shadow: 0 0 8px rgba(42, 168, 161, 0.3);
+}
+
+/* ============================= */
+/* BUTTONS */
+/* ============================= */
+.profileButtonSave {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 10px;
+  border: none;
+  background: #2aa8a1;
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.profileButtonSave:hover {
+  background: #1e8f89;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(42, 168, 161, 0.3);
+}
+
+.profileBackButton {
+  width: 100%;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: 2px solid #ddd;
+  background: white;
+  color: #666;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.profileBackButton:hover {
+  border-color: #2aa8a1;
+  color: #2aa8a1;
+  background: #f9f9f9;
+}

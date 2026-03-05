@@ -15,7 +15,7 @@ export default function Navbar() {
       <div className="navLinks">
         <NavLink to="/dashboard">Dashboard</NavLink>
         <NavLink to="/schedule">Schedule</NavLink>
-        <NavLink to="/logs">Logs</NavLink>
+        <NavLink to="/admin-users">User Profile</NavLink>
       </div>
 
       <button className="logoutBtn" onClick={handleLogout}>

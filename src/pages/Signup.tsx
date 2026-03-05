@@ -53,7 +53,13 @@ export default function Signup() {
       return;
     }
 
-    const newUser = { email, password };
+    const newUser = { 
+      email, 
+      password,
+      name: "",
+      deviceCount: 1,
+      petNames: [""]
+    };
 
     localStorage.setItem(
       "users",
@@ -69,6 +75,7 @@ export default function Signup() {
 
   return (
     <div className="container">
+      <div className="loginCard">
       <img src={logo} alt="Logo" className="logo" />
 
       <h3 className="title">Create Your Account</h3>
@@ -112,6 +119,7 @@ export default function Signup() {
       <p className="create" onClick={() => navigate("/")}>
         Back to Login
       </p>
+    </div>
     </div>
   );
 }

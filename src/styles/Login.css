@@ -1,124 +1,156 @@
-
+/* ============================= */
+/* BODY & CONTAINER */
+/* ============================= */
 body {
   margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-image: url('../assets/Bg.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 }
 
-
 .container {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   padding: 30px;
-  max-width: 380px;
-  margin: auto;
 }
 
+/* ============================= */
+/* LOGIN CARD */
+/* ============================= */
+.loginCard {
+  width: 100%;
+  max-width: 420px;
+  background: white;
+  padding: 50px 40px;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
 
 .logo {
   width: 120px;
   height: 120px;
-  align-self: center;
-  margin-bottom: 40px;
+  margin: 0 auto 35px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-
+/* ============================= */
+/* FORM ELEMENTS */
+/* ============================= */
 .title {
-  margin-bottom: 10px;
-  font-size: 14px;
-  color: #555;
+  margin-bottom: 25px;
+  font-size: 16px;
+  color: #666;
+  font-weight: 500;
 }
 
+.usernameWrapper,
+.passwordWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
 
 .input {
   width: 100%;
-  border: 2px solid #a82a2a;
-  border-radius: 12px;
-  padding: 14px;
-  margin-bottom: 18px;
+  border: 2px solid #2aa8a1;
+  border-radius: 10px;
+  padding: 14px 16px;
   font-size: 14px;
   background-color: #ffffff;
-  transition: 0.2s ease;
+  transition: all 0.3s ease;
   outline: none;
 }
 
-
 .input:focus {
-  border-color: #8f1e1e;
-  box-shadow: 0 0 6px rgba(42, 168, 161, 0.4);
+  border-color: #1e8f89;
+  box-shadow: 0 0 8px rgba(42, 168, 161, 0.3);
 }
 
+.toggle {
+  position: absolute;
+  right: 14px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #2aa8a1;
+  font-weight: 500;
+}
 
+/* ============================= */
+/* ROW CONTROLS */
+/* ============================= */
 .row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
+  margin-bottom: 28px;
   font-size: 13px;
 }
 
 .rememberRow {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+}
+
+.rememberRow input[type="checkbox"] {
+  cursor: pointer;
 }
 
 .forgot {
-  color: #555;
+  color: #2aa8a1;
   cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
 }
 
+.forgot:hover {
+  text-decoration: underline;
+}
 
+/* ============================= */
+/* BUTTON */
+/* ============================= */
 .button {
-  background-color: #2e2e2e;
-  padding: 14px;
+  background-color: #2aa8a1;
+  padding: 14px 20px;
   border-radius: 10px;
+  width: 100%;
   border: none;
   color: white;
-  font-weight: bold;
+  font-weight: 600;
   font-size: 15px;
   cursor: pointer;
-  transition: 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .button:hover {
-  background-color: #1c1c1c;
+  background-color: #1e8f89;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(42, 168, 161, 0.3);
 }
 
-
+/* ============================= */
+/* CREATE ACCOUNT */
+/* ============================= */
 .create {
   text-align: center;
-  margin-top: 25px;
-  font-size: 13px;
-  text-decoration: underline;
-  color: #333;
+  margin-top: 28px;
+  font-size: 14px;
+  color: #666;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.usernameWrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.passwordWrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.toggle {
-  position: absolute;
-  right: 10px;
-  top: 18px;
-  font-size: 12px;
-  cursor: pointer;
+.create:hover {
   color: #2aa8a1;
+  text-decoration: underline;
 }
