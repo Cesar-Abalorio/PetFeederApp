@@ -42,16 +42,10 @@ body {
 /* FORM ELEMENTS */
 /* ============================= */
 .title {
-<<<<<<< HEAD
   margin-bottom: 25px;
   font-size: 16px;
   color: #666;
   font-weight: 500;
-=======
-  margin-bottom: 10px;
-  font-size: 14px;
-  color: #ffffff;
->>>>>>> 997ff03a898c383dd2090ce0daab85bab2a9a254
 }
 
 .input {
@@ -69,36 +63,7 @@ body {
 
 .input:focus {
   border-color: #1e8f89;
-<<<<<<< HEAD
   box-shadow: 0 0 8px rgba(42, 168, 161, 0.3);
-=======
-  box-shadow: 0 0 6px rgba(42, 168, 161, 0.4);
-}
-
-.button {
-  background-color: #1e8f89;
-  padding: 14px;
-  border-radius: 10px;
-  border: none;
-  color: white;
-  font-weight: bold;
-  font-size: 15px;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.button:hover {
-  background-color: #1c1c1c;
-}
-
-.create {
-  text-align: center;
-  margin-top: 25px;
-  font-size: 13px;
-  text-decoration: underline;
-  color: #333;
-  cursor: pointer;
->>>>>>> 997ff03a898c383dd2090ce0daab85bab2a9a254
 }
 
 /* ============================= */

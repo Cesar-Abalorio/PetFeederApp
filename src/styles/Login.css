@@ -143,16 +143,9 @@ body {
 /* ============================= */
 .create {
   text-align: center;
-<<<<<<< HEAD
   margin-top: 28px;
   font-size: 14px;
   color: #666;
-=======
-  margin-top: 25px;
-  font-size: 13px;
-  text-decoration: underline;
-  color: #ffffff;
->>>>>>> 997ff03a898c383dd2090ce0daab85bab2a9a254
   cursor: pointer;
   transition: all 0.3s ease;
 }
