@@ -23,7 +23,7 @@ export default function Signup() {
     setStrength(checkStrength(value));
   };
 
- const handleSignup = () => {
+ const handleSignup = async () => {
   if (!email.includes("@")) {
     setError("Please enter a valid email address.");
     return;
@@ -40,36 +40,28 @@ export default function Signup() {
   }
 
   try {
-   
-    const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
-    
-    const userExists = existingUsers.some(
-      (user: any) => user.email === email
-    );
+    const response = await fetch(`${apiUrl}/register/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: email, password, email }),
+    });
 
-    if (userExists) {
-      setError("Account already exists.");
-      return;
+    const data = await response.json();
+
+    if (response.ok) {
+      localStorage.setItem("authToken", data.token);
+      localStorage.setItem("currentUser", data.username);
+      localStorage.setItem("role", "user");
+      alert("Account Created Successfully!");
+      navigate("/user");
+    } else {
+      setError(data.error || "Registration failed, please try again.");
     }
-
-    const newUser = { 
-      email, 
-      password,
-      name: "",
-      deviceCount: 1,
-      petNames: [""]
-    };
-
-    localStorage.setItem(
-      "users",
-      JSON.stringify([...existingUsers, newUser])
-    );
-
-    alert("Account Created Successfully!");
-    navigate("/");
   } catch (error) {
     console.error("Signup error:", error);
+    setError("Unable to register at the moment. Please try again later.");
   }
 };
 

@@ -5,6 +5,13 @@ import "../styles/User.css";
 export default function UserDashboard() {
   const navigate = useNavigate();
   const user = localStorage.getItem("currentUser");
+  const token = localStorage.getItem("authToken");
+
+  useEffect(() => {
+    if (!token) {
+      navigate("/");
+    }
+  }, [navigate, token]);
 
   const [foodLevels, setFoodLevels] = useState<number[]>([100]);
   const [lastFeds, setLastFeds] = useState<string[]>(["Not yet"]);
@@ -232,9 +239,27 @@ export default function UserDashboard() {
     });
   }, [foodLevels, user]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+    const token = localStorage.getItem("authToken");
+
+    try {
+      if (token) {
+        await fetch(`${apiUrl}/auth/logout/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${token}`,
+          },
+        });
+      }
+    } catch (err) {
+      console.warn("Logout API failed", err);
+    }
+
     localStorage.removeItem("currentUser");
     localStorage.removeItem("role");
+    localStorage.removeItem("authToken");
     navigate("/");
   };
 

@@ -13,37 +13,35 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false); 
   const navigate = useNavigate();
 
-  const handleLogin = () => {
-  if (!username || !password) {
-    alert("Please fill in all fields.");
-    return;
-    
-  }
+  const handleLogin = async () => {
+    if (!username || !password) {
+      alert("Please fill in all fields.");
+      return;
+    }
 
-  // Admin login
-  if (username === "admin" && password === "1234") {
-    localStorage.setItem("currentUser", "admin");
-    localStorage.setItem("role", "admin");
-    navigate("/dashboard");
-    return;
-  }
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+      const response = await fetch(`${apiUrl}/auth/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
 
-  const users = JSON.parse(localStorage.getItem("users") || "[]");
+      const data = await response.json();
 
-  const validUser = users.find(
-    (user: any) =>
-      user.email.trim() === username.trim() &&
-      user.password === password
-  );
-
-  if (validUser) {
-    localStorage.setItem("currentUser", validUser.email);
-    localStorage.setItem("role", "user");
-    navigate("/user");
-  } else {
-    alert("Invalid credentials");
-  }
-};
+      if (response.ok) {
+        localStorage.setItem("authToken", data.token);
+        localStorage.setItem("currentUser", data.username);
+        localStorage.setItem("role", data.username === "admin" ? "admin" : "user");
+        navigate(data.username === "admin" ? "/dashboard" : "/user");
+      } else {
+        alert(data.error || "Invalid credentials, please try again.");
+      }
+    } catch (error) {
+      console.error("Login failed", error);
+      alert("Unable to login at the moment. Please try again later.");
+    }
+  };
 
   return (
   <div className="container">
