@@ -5,49 +5,106 @@ import "../styles/Profile.css";
 export default function Profile() {
   const navigate = useNavigate();
 
-  const currentUser = localStorage.getItem("currentUser");
-
   const [name, setName] = useState("");
-  const [petNames, setPetNames] = useState<string[]>([]);
   const [email, setEmail] = useState("");
   const [deviceCount, setDeviceCount] = useState(1);
+  const [petNames, setPetNames] = useState<string[]>([]);
+  const [pets, setPets] = useState<any[]>([]);
+  const [newPetName, setNewPetName] = useState("");
+  const [newPetBreed, setNewPetBreed] = useState("");
+
+  // ✅ FETCH DATA FROM DJANGO API
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/api/profile/", {
+      headers: {
+        Authorization: "Token 4bcf8b5139ae23ee396cd2c2e372309bde078bea"
+      }
+    })
+      .then(res => res.json())
+      .then(data => {
+        setName(data.first_name || "");
+        setEmail(data.email || "");
+      })
+      .catch(err => console.error(err));
+  }, []);
 
   useEffect(() => {
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-
-    const userData = users.find(
-      (user: any) => user.email === currentUser
-    );
-
-    if (userData) {
-      setName(userData.name || "");
-      setPetNames(userData.petNames || Array(userData.deviceCount || 1).fill(""));
-      setEmail(userData.email || "");
-      setDeviceCount(userData.deviceCount || 1);
-    }
-  }, [currentUser]);
-
-  const handleSave = () => {
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-
-    const updatedUsers = users.map((user: any) => {
-      if (user.email === currentUser) {
-        return {
-          ...user,
-          name,
-          petNames,
-          email,
-          deviceCount
-        };
+    fetch("http://127.0.0.1:8000/api/pets/", {
+      headers: {
+        Authorization: "Token 4bcf8b5139ae23ee396cd2c2e372309bde078bea"
       }
-      return user;
-    });
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log("Pets:", data);
+        setPets(data);
+      })
+      .catch(err => console.error(err));
+  }, []);
 
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
-    localStorage.setItem("currentUser", email);
+  // ✅ UPDATE DATA TO DJANGO API
+  const handleSave = () => { 
+    
+    fetch("http://127.0.0.1:8000/api/profile/", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Token 4bcf8b5139ae23ee396cd2c2e372309bde078bea"
+      },
+      body: JSON.stringify({
+        first_name: name,
+        last_name: "Updated"
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        alert("Profile Updated Successfully!");
+        console.log(data);
+      })
+      .catch(err => console.error(err));
+  };
 
-    alert("Profile Updated Successfully!");
-    navigate("/user");
+  // ✅ ADD PET
+  const handleAddPet = () => {
+    fetch("http://127.0.0.1:8000/api/pets/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Token 4bcf8b5139ae23ee396cd2c2e372309bde078bea"
+      },
+      body: JSON.stringify({
+        name: newPetName,
+        breed: newPetBreed,
+        age: 1,
+        weight: 1
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.id) {
+          alert("Pet added successfully!");
+          setPets(prev => [...prev, data]);
+          setNewPetName("");
+          setNewPetBreed("");
+        } else {
+          alert("Error adding pet.");
+        }
+      })
+      .catch(err => console.error(err));
+  };
+
+  // ✅ DELETE PET
+  const handleDeletePet = (id: number) => {
+    fetch(`http://127.0.0.1:8000/api/pets/${id}/`, {
+      method: "DELETE",
+      headers: {
+        Authorization: "Token 4bcf8b5139ae23ee396cd2c2e372309bde078bea"
+      }
+    })
+      .then(() => {
+        setPets(prev => prev.filter(pet => pet.id !== id));
+      })
+      .catch(err => console.error(err));
   };
 
   return (
@@ -101,6 +158,38 @@ export default function Profile() {
             }}
           />
         ))}
+
+        {/* ✅ ADD PET UI */}
+        <h3>Add New Pet</h3>
+
+        <input
+          className="profileInput"
+          placeholder="Pet Name"
+          value={newPetName}
+          onChange={(e) => setNewPetName(e.target.value)}
+        />
+
+        <input
+          className="profileInput"
+          placeholder="Breed"
+          value={newPetBreed}
+          onChange={(e) => setNewPetBreed(e.target.value)}
+        />
+
+        <button className="profileButtonSave" onClick={handleAddPet}>
+          Add Pet
+        </button>
+
+        {/* ✅ ADD THIS (display pets) */}
+        <h3>Your Pets</h3>
+        <ul>
+          {pets.map((pet) => (
+            <li key={pet.id}>
+              {pet.name} - {pet.breed}
+              <button onClick={() => handleDeletePet(pet.id)}>Delete</button>
+            </li>
+          ))}
+        </ul>
 
         <button className="profileButtonSave" onClick={handleSave}>
           Save Changes

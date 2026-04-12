@@ -1,99 +1,136 @@
-import { useState } from "react";
-import "../styles/Login.css";
-import logo from "../assets/Logo.png";
-import InputField from "../components/InputField";
-import Button from "../components/Button";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import "../styles/Profile.css";
 
-
-export default function Login() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); 
+export default function Profile() {
   const navigate = useNavigate();
 
-  const handleLogin = async () => {
-    if (!username || !password) {
-      alert("Please fill in all fields.");
-      return;
-    }
+  const [name, setName] = useState("");
+  const [petNames, setPetNames] = useState<string[]>([]);
+  const [email, setEmail] = useState("");
+  const [deviceCount, setDeviceCount] = useState(1);
+  const token = localStorage.getItem("authToken");
 
+  // ✅ FETCH PROFILE FROM DJANGO API
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/api/profile/", {
+          method: "GET",
+          headers: {
+            "Authorization": `Token ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          console.log("TOKEN:", data.token);
+          setName(data.first_name || "");
+          setEmail(data.email || "");
+        } else {
+          alert("Failed to load profile");
+        }
+      } catch (error) {
+        console.error(error);
+        alert("Error fetching profile");
+      }
+    };
+
+    fetchProfile();
+  }, [token]);
+
+  // ✅ UPDATE PROFILE TO DJANGO API
+  const handleSave = async () => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-      const response = await fetch(`${apiUrl}/auth/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+      const response = await fetch("http://127.0.0.1:8000/api/profile/", {
+        method: "PUT",
+        headers: {
+          "Authorization": `Token ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          first_name: name,
+          last_name: "User"
+        })
       });
 
-      const data = await response.json();
-
       if (response.ok) {
-        localStorage.setItem("authToken", data.token);
-        localStorage.setItem("currentUser", data.username);
-        localStorage.setItem("role", data.username === "admin" ? "admin" : "user");
-        navigate(data.username === "admin" ? "/dashboard" : "/user");
+        alert("Profile Updated Successfully!");
+        navigate("/user");
       } else {
-        alert(data.error || "Invalid credentials, please try again.");
+        alert("Update failed");
       }
     } catch (error) {
-      console.error("Login failed", error);
-      alert("Unable to login at the moment. Please try again later.");
+      console.error(error);
+      alert("Error updating profile");
     }
   };
 
   return (
-  <div className="container">
-    <div className="loginCard">
+    <div className="profileContainer">
+      <div className="profileCard">
+        <h2>Edit Profile</h2>
 
-      <img src={logo} alt="Logo" className="logo" />
+        <input
+          className="profileInput"
+          placeholder="Your Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
 
-      <h3 className="title">Log in to your Account</h3>
-
-      <div className="usernameWrapper">
-        <InputField
+        <input
+          className="profileInput"
           placeholder="Email Address"
-          value={username}
-          onChange={setUsername}
+          value={email}
+          disabled
         />
-      </div>
 
-      <div className="passwordWrapper">
-        <InputField
-          type={showPassword ? "text" : "password"}
-          placeholder="Password"
-          value={password}
-          onChange={setPassword}
+        <input
+          className="profileInput"
+          type="number"
+          placeholder="Number of Devices"
+          value={deviceCount}
+          onChange={(e) => {
+            const newCount = Math.max(1, parseInt(e.target.value) || 1);
+            setDeviceCount(newCount);
+            setPetNames(prev => {
+              const newPetNames = [...prev];
+              while (newPetNames.length < newCount) {
+                newPetNames.push("");
+              }
+              return newPetNames.slice(0, newCount);
+            });
+          }}
+          min="1"
         />
-        <span
-          className="toggle"
-          onClick={() => setShowPassword(!showPassword)}
-        >
-          {showPassword ? "Hide" : "Show"}
-        </span>
-      </div>
 
-      <div className="row">
-        <div className="rememberRow">
+        {Array.from({ length: deviceCount }, (_, i) => (
           <input
-            type="checkbox"
-            checked={remember}
-            onChange={(e) => setRemember(e.target.checked)}
+            key={i}
+            className="profileInput"
+            placeholder={`Pet Name for Device ${i + 1}`}
+            value={petNames[i] || ""}
+            onChange={(e) => {
+              const newPetNames = [...petNames];
+              newPetNames[i] = e.target.value;
+              setPetNames(newPetNames);
+            }}
           />
-          <span>Remember</span>
-        </div>
+        ))}
 
-        <span className="forgot">Forgot Password?</span>
+        <button className="profileButtonSave" onClick={handleSave}>
+          Save Changes
+        </button>
+
+        <button
+          className="profileBackButton"
+          onClick={() => navigate("/user")}
+        >
+          Back
+        </button>
       </div>
-
-      <Button text="Sign in" onClick={handleLogin} />
-
-      <p className="create" onClick={() => navigate("/signup")}>
-        Create Account
-      </p>
-
     </div>
-  </div>
-);
+  );
 }
