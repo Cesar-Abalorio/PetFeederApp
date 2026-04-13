@@ -1,243 +1,230 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { logoutAndRedirect, verifyAuthToken } from "../utils/auth";
 import "../styles/User.css";
+
+interface FeedingSchedule {
+  id: number;
+  device: number;
+  time: string;
+  created_at: string;
+}
+
+interface Device {
+  id: number;
+  name: string;
+  status: string;
+  food_level: number;
+  last_feeding: string | null;
+  user: number;
+}
 
 export default function UserDashboard() {
   const navigate = useNavigate();
   const user = localStorage.getItem("currentUser");
   const token = localStorage.getItem("authToken");
+  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
   useEffect(() => {
-    if (!token) {
-      navigate("/");
-    }
+    const validate = async () => {
+      if (!token || !(await verifyAuthToken(navigate))) return;
+    };
+    validate();
   }, [navigate, token]);
 
-  const [foodLevels, setFoodLevels] = useState<number[]>([100]);
-  const [lastFeds, setLastFeds] = useState<string[]>(["Not yet"]);
-  const [deviceStatuses, setDeviceStatuses] = useState<Array<{id: number, status: "Online" | "Offline" | "Not Working", lastOnline: string | null}>>([]);
-  const [deviceSchedules, setDeviceSchedules] = useState<string[][]>([[]]);
-  const [scheduleInputs, setScheduleInputs] = useState<string[]>([""]);  const [notifications, setNotifications] = useState<string[]>([]);
-  const [lastTriggeredMinute, setLastTriggeredMinute] = useState("");
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [schedules, setSchedules] = useState<FeedingSchedule[]>([]);
+  const [scheduleInputs, setScheduleInputs] = useState<{[key: number]: string}>({});
+  const [notifications, setNotifications] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [lastFedTimes, setLastFedTimes] = useState<{[key: number]: number}>({});
 
+  // Fetch devices, schedules, and logs on component mount
   useEffect(() => {
-    // Get user device count
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const userData = users.find((u: any) => u.email === user);
-    const deviceCount = userData?.deviceCount || 1;
+    const fetchData = async () => {
+      try {
+        setLoading(true);
 
-    // Initialize device statuses
-    const initialStatuses = Array.from({ length: deviceCount }, (_, i) => ({
-      id: i + 1,
-      status: "Online" as const,
-      lastOnline: null
-    }));
-    setDeviceStatuses(initialStatuses);
-
-    // Initialize food levels and last feeds
-    setFoodLevels(Array(deviceCount).fill(100));
-    setLastFeds(Array(deviceCount).fill("Not yet"));
-
-    // Initialize schedules
-    const initialSchedules = Array.from({ length: deviceCount }, () => []);
-    setDeviceSchedules(initialSchedules);
-    setScheduleInputs(Array(deviceCount).fill(""));
-
-    const interval = setInterval(() => {
-      setDeviceStatuses(prevStatuses =>
-        prevStatuses.map(device => {
-          const random = Math.random();
-          let newStatus: "Online" | "Offline" | "Not Working" = "Online";
-          let lastOnline = device.lastOnline;
-
-          if (random < 0.1) {
-            newStatus = "Offline";
-            lastOnline = new Date().toLocaleString();
-          } else if (random < 0.15) {
-            newStatus = "Not Working";
-            lastOnline = new Date().toLocaleString();
+        // Fetch devices
+        const devicesResponse = await fetch(`${apiUrl}/devices/`, {
+          headers: {
+            'Authorization': `Token ${token}`,
+            'Content-Type': 'application/json'
           }
+        });
 
-          return {
-            ...device,
-            status: newStatus,
-            lastOnline
-          };
-        })
-      );
-    }, 15000);
+        if (devicesResponse.ok) {
+          const devicesData = await devicesResponse.json();
+          setDevices(devicesData);
+        }
 
-    return () => clearInterval(interval);
-  }, [user]);
+        // Fetch schedules from localStorage
+        const storedSchedules = JSON.parse(localStorage.getItem("feedingSchedules") || "[]");
+        setSchedules(storedSchedules);
 
-  const addFeedLog = (
-    type: "Manual" | "Scheduled",
-    status: "Success" | "Failed",
-    foodAfter: number,
-    deviceId: number = 1
-  ) => {
-    const existingLogs =
-      JSON.parse(localStorage.getItem("feedingLogs") || "[]");
+        // Fetch feeding logs
+        const logsResponse = await fetch(`${apiUrl}/logs/`, {
+          headers: {
+            'Authorization': `Token ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
 
-    const newLog = {
-      id: Date.now(),
-      time: new Date().toLocaleString(),
-      user: user,
-      type,
-      foodAfter,
-      status,
-      deviceId
+        if (logsResponse.ok) {
+          // TODO: Use feedingLogs state if we add logs display to dashboard
+        }
+
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        logoutAndRedirect(navigate, 'Unable to connect to server. Please login again once the backend is available.');
+        return;
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const updatedLogs = [newLog, ...existingLogs];
+    if (token) {
+      fetchData();
+    }
+  }, [token, apiUrl]);
 
-    localStorage.setItem("feedingLogs", JSON.stringify(updatedLogs));
+  // Auto-feeding based on schedules
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date();
+      const currentTime = now.toTimeString().slice(0, 5); // HH:MM
+
+      schedules.forEach(schedule => {
+        if (schedule.time.slice(0, 5) === currentTime) {
+          const lastFed = lastFedTimes[schedule.id];
+          if (!lastFed || now.getTime() - lastFed > 60000) { // At least 1 minute ago
+            handleManualFeed(schedule.device);
+            setLastFedTimes(prev => ({ ...prev, [schedule.id]: now.getTime() }));
+          }
+        }
+      });
+    }, 30000); // Check every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [schedules, lastFedTimes]);
+
+  // Add Notification
+  const addNotification = (message: string) => {
+    setNotifications((prev) => [message, ...prev]);
   };
 
-  const handleAddSchedule = (deviceId: number) => {
-    const scheduleTime = scheduleInputs[deviceId - 1];
+  const getDeviceName = (deviceId: number) => {
+    const device = devices.find(d => d.id === deviceId);
+    return device?.name || `Device ${deviceId}`;
+  };
+
+  const handleManualFeed = async (deviceId: number) => {
+    try {
+      const response = await fetch(`${apiUrl}/devices/feed/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Token ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ device_id: deviceId })
+      });
+
+      if (response.ok) {
+        addNotification(`✅ Manual feeding successful for ${getDeviceName(deviceId)}`);
+
+        // Refresh devices and logs data
+        const devicesResponse = await fetch(`${apiUrl}/devices/`, {
+          headers: {
+            'Authorization': `Token ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (devicesResponse.ok) {
+          const devicesData = await devicesResponse.json();
+          setDevices(devicesData);
+        }
+
+        const logsResponse = await fetch(`${apiUrl}/logs/`, {
+          headers: {
+            'Authorization': `Token ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (logsResponse.ok) {
+          // TODO: Use feedingLogs state if we add logs display to dashboard
+        }
+      } else {
+        const error = await response.json();
+        addNotification(`❌ Manual feeding failed: ${error.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error feeding device:', error);
+      addNotification('❌ Failed to feed device');
+    }
+  };
+
+  const handleAddSchedule = async (deviceId: number) => {
+    const scheduleTime = scheduleInputs[deviceId];
     if (!scheduleTime) return;
 
-    const currentSchedules = deviceSchedules[deviceId - 1] || [];
-    if (currentSchedules.includes(scheduleTime)) {
+    // Normalize time to HH:MM:SS for backend TimeField validation
+    const normalizedTime = scheduleTime.length === 5 ? `${scheduleTime}:00` : scheduleTime;
+
+    // Check if schedule already exists for this device and time
+    const existingSchedule = schedules.find(s => s.device === deviceId && s.time === normalizedTime);
+    if (existingSchedule) {
       addNotification(`⚠️ Schedule already exists for ${getDeviceName(deviceId)}.`);
       return;
     }
 
-    const newSchedules = [...deviceSchedules];
-    newSchedules[deviceId - 1] = [...currentSchedules, scheduleTime];
-    setDeviceSchedules(newSchedules);
+    try {
+      const newSchedule = {
+        id: Date.now(), // Simple ID generation
+        device: deviceId,
+        time: normalizedTime,
+        created_at: new Date().toISOString()
+      };
 
-    const newInputs = [...scheduleInputs];
-    newInputs[deviceId - 1] = "";
-    setScheduleInputs(newInputs);
+      const updatedSchedules = [...schedules, newSchedule];
+      localStorage.setItem("feedingSchedules", JSON.stringify(updatedSchedules));
+      setSchedules(updatedSchedules);
 
-    addNotification(`⏰ Schedule added for ${getDeviceName(deviceId)}.`);
-  };
+      const newInputs = { ...scheduleInputs };
+      newInputs[deviceId] = "";
+      setScheduleInputs(newInputs);
 
-
-  const handleRemoveSchedule = (deviceId: number, time: string) => {
-    const newSchedules = [...deviceSchedules];
-    const currentSchedules = newSchedules[deviceId - 1] || [];
-    newSchedules[deviceId - 1] = currentSchedules.filter((t) => t !== time);
-    setDeviceSchedules(newSchedules);
-    addNotification(`🗑 Schedule removed from ${getDeviceName(deviceId)}.`);
-  };
-
-  //  Add Notification
-  const addNotification = (message: string) => {
-    setNotifications((prev) => [message, ...prev]);
-  };
-  
-  const getDeviceName = (deviceId: number) => {
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const userData = users.find((u: any) => u.email === user);
-    const petNames = userData?.petNames || [];
-    return petNames[deviceId - 1] || `Device ${deviceId}`;
-  };
-
-  const handleManualFeed = (deviceId: number) => {
-    const deviceIndex = deviceId - 1;
-    const currentFoodLevel = foodLevels[deviceIndex];
-
-    if (currentFoodLevel > 0) {
-      const newFoodLevel = Math.max(currentFoodLevel - 5, 0);
-      const newFoodLevels = [...foodLevels];
-      newFoodLevels[deviceIndex] = newFoodLevel;
-      setFoodLevels(newFoodLevels);
-
-      const now = new Date().toLocaleTimeString();
-      const newLastFeds = [...lastFeds];
-      newLastFeds[deviceIndex] = now;
-      setLastFeds(newLastFeds);
-
-      addFeedLog("Manual", "Success", newFoodLevel, deviceId);
-      addNotification(`✅ Manual feeding successful for ${getDeviceName(deviceId)} at ${now}`);
-    } else {
-      addFeedLog("Manual", "Failed", currentFoodLevel, deviceId);
-      addNotification(`❌ Manual feeding failed for ${getDeviceName(deviceId)}. No food.`);
+      addNotification(`⏰ Schedule added for ${getDeviceName(deviceId)}.`);
+    } catch (error) {
+      console.error('Error adding schedule:', error);
+      addNotification('❌ Failed to add schedule');
     }
   };
 
-  //  Scheduled Feed Checker (runs every second)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date();
-      const currentTime = now.toTimeString().slice(0, 5);
-      const currentMinute = now.toISOString().slice(0, 16);
-
-      deviceSchedules.forEach((schedules, deviceIndex) => {
-        const deviceId = deviceIndex + 1;
-        schedules.forEach((time) => {
-          if (
-            time === currentTime &&
-            currentMinute !== lastTriggeredMinute
-          ) {
-            const currentFoodLevel = foodLevels[deviceIndex];
-            if (currentFoodLevel > 0) {
-              const newFoodLevel = Math.max(currentFoodLevel - 5, 0);
-              const newFoodLevels = [...foodLevels];
-              newFoodLevels[deviceIndex] = newFoodLevel;
-              setFoodLevels(newFoodLevels);
-
-              const newLastFeds = [...lastFeds];
-              newLastFeds[deviceIndex] = now.toLocaleTimeString();
-              setLastFeds(newLastFeds);
-
-              addNotification(`⏰ Scheduled feeding for ${getDeviceName(deviceId)} at ${time}`);
-              addFeedLog("Scheduled", "Success", newFoodLevel, deviceId);
-            } else {
-              addNotification(`❌ Scheduled feeding failed for ${getDeviceName(deviceId)}. No food.`);
-              addFeedLog("Scheduled", "Failed", currentFoodLevel, deviceId);
-            }
-
-            setLastTriggeredMinute(currentMinute);
-          }
-        });
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [deviceSchedules, foodLevels, lastTriggeredMinute, user]);
-   
-    useEffect(() => {
-    // Get user device count
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const userData = users.find((u: any) => u.email === user);
-    const deviceCount = userData?.deviceCount || 1;
-
-    const savedSchedules = localStorage.getItem(`deviceSchedules_${user}`);
-    if (savedSchedules) {
-      const parsed = JSON.parse(savedSchedules);
-      // Ensure all devices have schedule arrays
-      const schedules = Array.from({ length: deviceCount }, (_, i) => parsed[i] || []);
-      setDeviceSchedules(schedules);
+  const handleRemoveSchedule = async (scheduleId: number, deviceId: number) => {
+    try {
+      const updatedSchedules = schedules.filter(s => s.id !== scheduleId);
+      localStorage.setItem("feedingSchedules", JSON.stringify(updatedSchedules));
+      setSchedules(updatedSchedules);
+      addNotification(`🗑 Schedule removed from ${getDeviceName(deviceId)}.`);
+    } catch (error) {
+      console.error('Error removing schedule:', error);
+      addNotification('❌ Failed to remove schedule');
     }
-  }, [user]);
+  };
 
+  // Low Food Alerts
   useEffect(() => {
-    if (user) {
-      localStorage.setItem(
-        `deviceSchedules_${user}`,
-        JSON.stringify(deviceSchedules)
-      );
-    }
-  }, [deviceSchedules, user]);
-
-  //  Low Food Alerts
-  useEffect(() => {
-    foodLevels.forEach((level, index) => {
-      const deviceId = index + 1;
-      if (level <= 20 && level > 0) {
-        addNotification(`⚠️ ${getDeviceName(deviceId)} food level is low!`);
+    devices.forEach((device) => {
+      if (device.food_level <= 20 && device.food_level > 0) {
+        addNotification(`⚠️ ${device.name} food level is low!`);
       }
-      if (level === 0) {
-        addNotification(`❌ ${getDeviceName(deviceId)} food container empty!`);
+      if (device.food_level === 0) {
+        addNotification(`❌ ${device.name} food container empty!`);
       }
     });
-  }, [foodLevels, user]);
+  }, [devices]);
 
   const handleLogout = async () => {
     const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
@@ -317,6 +304,10 @@ export default function UserDashboard() {
         Profile
         </button>
 
+        <button onClick={() => navigate("/devices")}>
+        My Devices
+        </button>
+
         <button onClick={() => navigate("/pet-tracker")}>
         Pet Feed Tracker
         </button>
@@ -333,80 +324,90 @@ export default function UserDashboard() {
       <div className="userCard">
         <h3>Device Status</h3>
 
-        {deviceStatuses.map((device) => (
-          <div key={device.id} style={{ marginBottom: "15px", padding: "10px", border: "1px solid #e5e7eb", borderRadius: "8px" }}>
-            <p>
-              <strong>{getDeviceName(device.id)}:</strong>{" "}
-              <span className={`statusIndicator ${
-                device.status === "Online" ? "online" :
-                device.status === "Offline" ? "offline" : "not-working"
-              }`}>
-                ● {device.status}
-              </span>
-            </p>
-
-            {(device.status === "Offline" || device.status === "Not Working") && device.lastOnline && (
-              <p className="lastOnline">
-                Last Online: {device.lastOnline}
+        {loading ? (
+          <p>Loading devices...</p>
+        ) : devices.length === 0 ? (
+          <p>No devices found. Add devices in the Devices page.</p>
+        ) : (
+          devices.map((device) => (
+            <div key={device.id} style={{ marginBottom: "15px", padding: "10px", border: "1px solid #e5e7eb", borderRadius: "8px" }}>
+              <p>
+                <strong>{device.name}:</strong>{" "}
+                <span className={`statusIndicator ${
+                  device.status === "online" ? "online" :
+                  device.status === "offline" ? "offline" : "not-working"
+                }`}>
+                  ● {device.status.charAt(0).toUpperCase() + device.status.slice(1)}
+                </span>
               </p>
-            )}
 
-            <p><strong>Last Feeding:</strong> {lastFeds[device.id - 1]}</p>
-            <p><strong>Food Level:</strong></p>
+              <p><strong>Last Feeding:</strong> {device.last_feeding ? new Date(device.last_feeding).toLocaleString() : "Not yet"}</p>
+              <p><strong>Food Level:</strong></p>
 
-            <div className="foodBar">
-              <div
-                className={`foodFill ${foodLevels[device.id - 1] <= 20 ? "low" : ""}`}
-                style={{ width: `${foodLevels[device.id - 1]}%` }}
-              ></div>
+              <div className="foodBar">
+                <div
+                  className={`foodFill ${device.food_level <= 20 ? "low" : ""}`}
+                  style={{ width: `${device.food_level}%` }}
+                ></div>
+              </div>
+
+              <span className="foodPercent">{device.food_level}%</span>
+
+              <div style={{ marginTop: "10px" }}>
+                <button
+                  onClick={() => handleManualFeed(device.id)}
+                  className="manualFeedButton"
+                  style={{ fontSize: "12px", padding: "6px 12px" }}
+                >
+                  Feed {device.name}
+                </button>
+              </div>
             </div>
-
-            <span className="foodPercent">{foodLevels[device.id - 1]}%</span>
-
-            <div style={{ marginTop: "10px" }}>
-              <button
-                onClick={() => handleManualFeed(device.id)}
-                className="manualFeedButton"
-                style={{ fontSize: "12px", padding: "6px 12px" }}
-              >
-                Feed {getDeviceName(device.id)}
-              </button>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* Schedule */}
       <div className="userCard">
         <h3>Feeding Schedule</h3>
 
-        {deviceStatuses.map((device) => (
-          <div key={device.id} style={{ marginBottom: "20px", padding: "10px", border: "1px solid #e5e7eb", borderRadius: "8px" }}>
-            <h4>{getDeviceName(device.id)} Schedule</h4>
+        {loading ? (
+          <p>Loading schedules...</p>
+        ) : devices.length === 0 ? (
+          <p>No devices found. Add devices in the Devices page.</p>
+        ) : (
+          devices.map((device) => {
+            const deviceSchedules = schedules.filter(s => s.device === device.id);
+            return (
+              <div key={device.id} style={{ marginBottom: "20px", padding: "10px", border: "1px solid #e5e7eb", borderRadius: "8px" }}>
+                <h4>{device.name} Schedule</h4>
 
-            <div className="scheduleInputRow">
-              <input
-                type="time"
-                value={scheduleInputs[device.id - 1]}
-                onChange={(e) => {
-                  const newInputs = [...scheduleInputs];
-                  newInputs[device.id - 1] = e.target.value;
-                  setScheduleInputs(newInputs);
-                }}
-              />
-              <button onClick={() => handleAddSchedule(device.id)}>Add</button>
-            </div>
+                <div className="scheduleInputRow">
+                  <input
+                    type="time"
+                    value={scheduleInputs[device.id] || ""}
+                    onChange={(e) => {
+                      setScheduleInputs(prev => ({
+                        ...prev,
+                        [device.id]: e.target.value
+                      }));
+                    }}
+                  />
+                  <button onClick={() => handleAddSchedule(device.id)}>Add</button>
+                </div>
 
-            {(deviceSchedules[device.id - 1] || []).map((time, index) => (
-              <div key={index} className="scheduleItem">
-                <span>{time}</span>
-                <button onClick={() => handleRemoveSchedule(device.id, time)}>
-                  Remove
-                </button>
+                {deviceSchedules.map((schedule) => (
+                  <div key={schedule.id} className="scheduleItem">
+                    <span>{schedule.time}</span>
+                    <button onClick={() => handleRemoveSchedule(schedule.id, device.id)}>
+                      Remove
+                    </button>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        ))}
+            );
+          })
+        )}
       </div>
     </div>
 

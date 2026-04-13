@@ -23,47 +23,47 @@ export default function Signup() {
     setStrength(checkStrength(value));
   };
 
- const handleSignup = async () => {
-  if (!email.includes("@")) {
-    setError("Please enter a valid email address.");
-    return;
-  }
-
-  if (password !== confirmPassword) {
-    setError("Passwords do not match.");
-    return;
-  }
-
-  if (strength === "Weak") {
-    setError("Password is too weak.");
-    return;
-  }
-
-  try {
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-
-    const response = await fetch(`${apiUrl}/register/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: email, password, email }),
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
-      localStorage.setItem("authToken", data.token);
-      localStorage.setItem("currentUser", data.username);
-      localStorage.setItem("role", "user");
-      alert("Account Created Successfully!");
-      navigate("/user");
-    } else {
-      setError(data.error || "Registration failed, please try again.");
+  const handleSignup = async () => {
+    if (!email.includes("@")) {
+      setError("Please enter a valid email address.");
+      return;
     }
-  } catch (error) {
-    console.error("Signup error:", error);
-    setError("Unable to register at the moment. Please try again later.");
-  }
-};
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (strength === "Weak") {
+      setError("Password is too weak.");
+      return;
+    }
+
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+
+      const response = await fetch(`${apiUrl}/register/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: email, password, email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem("authToken", data.token);
+        localStorage.setItem("currentUser", data.username);
+        localStorage.setItem("role", "user");
+        alert("Account Created Successfully!");
+        navigate("/user");
+      } else {
+        setError(data.error || "Registration failed, please try again.");
+      }
+    } catch (error) {
+      console.error("Signup error:", error);
+      setError("Unable to connect to server. Please check your connection and try again.");
+    }
+  };
 
   return (
     <div className="container">

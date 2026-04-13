@@ -1,30 +1,28 @@
 import { useState } from "react";
-import "../styles/Login.css";
-import logo from "../assets/Logo.png";
-import InputField from "../components/InputField";
-import Button from "../components/Button";
 import { useNavigate } from "react-router-dom";
-
+import "../styles/Login.css";
+import logo from "../assets/logo.jpg";
 
 export default function Login() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); 
   const navigate = useNavigate();
 
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
   const handleLogin = async () => {
-    if (!username || !password) {
-      alert("Please fill in all fields.");
+    if (!email || !password) {
+      setError("Please enter both email and password.");
       return;
     }
 
     try {
       const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+
       const response = await fetch(`${apiUrl}/auth/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username: email, password }),
       });
 
       const data = await response.json();
@@ -32,68 +30,50 @@ export default function Login() {
       if (response.ok) {
         localStorage.setItem("authToken", data.token);
         localStorage.setItem("currentUser", data.username);
-        localStorage.setItem("role", data.username === "admin" ? "admin" : "user");
-        navigate(data.username === "admin" ? "/dashboard" : "/user");
+        localStorage.setItem("role", data.role || "user");
+        navigate("/user");
       } else {
-        alert(data.error || "Invalid credentials, please try again.");
+        setError(data.error || "Login failed, please try again.");
       }
     } catch (error) {
-      console.error("Login failed", error);
-      alert("Unable to login at the moment. Please try again later.");
+      console.error("Login error:", error);
+      setError("Unable to connect to server. Please check your connection and try again.");
     }
   };
 
   return (
-  <div className="container">
-    <div className="loginCard">
+    <div className="container">
+      <div className="loginCard">
+        <img src={logo} alt="Logo" className="logo" />
 
-      <img src={logo} alt="Logo" className="logo" />
+        <h3 className="title">Login to Your Account</h3>
 
-      <h3 className="title">Log in to your Account</h3>
-
-      <div className="usernameWrapper">
-        <InputField
+        <input
+          className="input"
+          type="email"
           placeholder="Email Address"
-          value={username}
-          onChange={setUsername}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
-      </div>
 
-      <div className="passwordWrapper">
-        <InputField
-          type={showPassword ? "text" : "password"}
+        <input
+          className="input"
+          type="password"
           placeholder="Password"
           value={password}
-          onChange={setPassword}
+          onChange={(e) => setPassword(e.target.value)}
         />
-        <span
-          className="toggle"
-          onClick={() => setShowPassword(!showPassword)}
-        >
-          {showPassword ? "Hide" : "Show"}
-        </span>
+
+        {error && <p className="error">{error}</p>}
+
+        <button className="button" onClick={handleLogin}>
+          Login
+        </button>
+
+        <p className="link" onClick={() => navigate("/signup")}>
+          Don't have an account? Sign up
+        </p>
       </div>
-
-      <div className="row">
-        <div className="rememberRow">
-          <input
-            type="checkbox"
-            checked={remember}
-            onChange={(e) => setRemember(e.target.checked)}
-          />
-          <span>Remember</span>
-        </div>
-
-        <span className="forgot">Forgot Password?</span>
-      </div>
-
-      <Button text="Sign in" onClick={handleLogin} />
-
-      <p className="create" onClick={() => navigate("/signup")}>
-        Create Account
-      </p>
-
     </div>
-  </div>
-);
+  );
 }
