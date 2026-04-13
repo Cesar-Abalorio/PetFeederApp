@@ -1,135 +1,78 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/Profile.css";
+import "../styles/Login.css";
+import logo from "../assets/logo.jpg";
 
-export default function Profile() {
+export default function Login() {
   const navigate = useNavigate();
 
-  const [name, setName] = useState("");
-  const [petNames, setPetNames] = useState<string[]>([]);
   const [email, setEmail] = useState("");
-  const [deviceCount, setDeviceCount] = useState(1);
-  const token = localStorage.getItem("authToken");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-  // ✅ FETCH PROFILE FROM DJANGO API
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await fetch("http://127.0.0.1:8000/api/profile/", {
-          method: "GET",
-          headers: {
-            "Authorization": `Token ${token}`,
-            "Content-Type": "application/json"
-          }
-        });
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setError("Please enter both email and password.");
+      return;
+    }
 
-        const data = await response.json();
-
-        if (response.ok) {
-          console.log("TOKEN:", data.token);
-          setName(data.first_name || "");
-          setEmail(data.email || "");
-        } else {
-          alert("Failed to load profile");
-        }
-      } catch (error) {
-        console.error(error);
-        alert("Error fetching profile");
-      }
-    };
-
-    fetchProfile();
-  }, [token]);
-
-  // ✅ UPDATE PROFILE TO DJANGO API
-  const handleSave = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/profile/", {
-        method: "PUT",
-        headers: {
-          "Authorization": `Token ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          first_name: name,
-          last_name: "User"
-        })
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+
+      const response = await fetch(`${apiUrl}/auth/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: email, password }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        alert("Profile Updated Successfully!");
+        localStorage.setItem("authToken", data.token);
+        localStorage.setItem("currentUser", data.username);
+        localStorage.setItem("role", data.role || "user");
         navigate("/user");
       } else {
-        alert("Update failed");
+        setError(data.error || "Login failed, please try again.");
       }
     } catch (error) {
-      console.error(error);
-      alert("Error updating profile");
+      console.error("Login error:", error);
+      setError("Unable to connect to server. Please check your connection and try again.");
     }
   };
 
   return (
-    <div className="profileContainer">
-      <div className="profileCard">
-        <h2>Edit Profile</h2>
+    <div className="container">
+      <div className="loginCard">
+        <img src={logo} alt="Logo" className="logo" />
+
+        <h3 className="title">Login to Your Account</h3>
 
         <input
-          className="profileInput"
-          placeholder="Your Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-
-        <input
-          className="profileInput"
+          className="input"
+          type="email"
           placeholder="Email Address"
           value={email}
-          disabled
+          onChange={(e) => setEmail(e.target.value)}
         />
 
         <input
-          className="profileInput"
-          type="number"
-          placeholder="Number of Devices"
-          value={deviceCount}
-          onChange={(e) => {
-            const newCount = Math.max(1, parseInt(e.target.value) || 1);
-            setDeviceCount(newCount);
-            setPetNames(prev => {
-              const newPetNames = [...prev];
-              while (newPetNames.length < newCount) {
-                newPetNames.push("");
-              }
-              return newPetNames.slice(0, newCount);
-            });
-          }}
-          min="1"
+          className="input"
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
         />
 
-        {Array.from({ length: deviceCount }, (_, i) => (
-          <input
-            key={i}
-            className="profileInput"
-            placeholder={`Pet Name for Device ${i + 1}`}
-            value={petNames[i] || ""}
-            onChange={(e) => {
-              const newPetNames = [...petNames];
-              newPetNames[i] = e.target.value;
-              setPetNames(newPetNames);
-            }}
-          />
-        ))}
+        {error && <p className="error">{error}</p>}
 
-        <button className="profileButtonSave" onClick={handleSave}>
-          Save Changes
+        <button className="button" onClick={handleLogin}>
+          Login
         </button>
 
-        <button
-          className="profileBackButton"
-          onClick={() => navigate("/user")}
-        >
-          Back
-        </button>
+        <p className="link" onClick={() => navigate("/signup")}>
+          Don't have an account? Sign up
+        </p>
       </div>
     </div>
   );

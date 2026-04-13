@@ -1,47 +1,68 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { verifyAuthToken } from "../utils/auth";
 import "../styles/User.css";
 
 export default function PetFeedTracker() {
   const navigate = useNavigate();
   const user = localStorage.getItem("currentUser");
+  const token = localStorage.getItem("authToken");
 
-  // Redirect to login if not authenticated
+  // Redirect to login if not authenticated, and validate token with backend
   useEffect(() => {
-    if (!user) {
-      navigate("/");
-    }
-  }, [user, navigate]);
+    const validate = async () => {
+      if (!user || !token) {
+        navigate("/");
+        return;
+      }
+      await verifyAuthToken(navigate);
+    };
+    validate();
+  }, [navigate, token, user]);
 
   // Don't render if not authenticated
-  if (!user) {
+  if (!user || !token) {
     return null;
   }
 
   const [feedLogs, setFeedLogs] = useState<any[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadLogs = () => {
-      const allLogs = JSON.parse(localStorage.getItem("feedingLogs") || "[]");
-      const userLogs = allLogs.filter((log: any) => log.user === user);
-      setFeedLogs(userLogs.reverse()); // Most recent first
+    const loadLogs = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+        const response = await fetch(`${apiUrl}/logs/`, {
+          headers: {
+            'Authorization': `Token ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setFeedLogs(data.reverse()); // Most recent first
+        } else {
+          console.error("Failed to fetch logs");
+        }
+      } catch (error) {
+        console.error("Error fetching logs:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    loadLogs(); // Load immediately
+    if (token) {
+      loadLogs();
+    }
 
-    // Refresh logs every 5 seconds to catch new feeding events
-    const interval = setInterval(loadLogs, 5000);
+    // Refresh logs every 30 seconds
+    const interval = setInterval(() => {
+      if (token) loadLogs();
+    }, 30000);
 
-    // Also refresh when window gains focus
-    const handleFocus = () => loadLogs();
-    window.addEventListener('focus', handleFocus);
-
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, [user]);
+    return () => clearInterval(interval);
+  }, [token]);
 
   const getDeviceName = (deviceId: number) => {
     const users = JSON.parse(localStorage.getItem("users") || "[]");
@@ -121,7 +142,11 @@ export default function PetFeedTracker() {
         <div className="userCard">
           <h3>Feeding History</h3>
 
-          {filteredLogs.length === 0 ? (
+          {loading ? (
+            <p style={{ textAlign: "center", color: "#666", padding: "20px" }}>
+              Loading feeding records...
+            </p>
+          ) : filteredLogs.length === 0 ? (
             <p style={{ textAlign: "center", color: "#666", padding: "20px" }}>
               No feeding records found.
             </p>

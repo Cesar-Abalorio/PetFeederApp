@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { logoutAndRedirect, verifyAuthToken } from "../utils/auth";
 import "../styles/Profile.css";
 
 export default function Profile() {
@@ -13,92 +14,132 @@ export default function Profile() {
   const [newPetName, setNewPetName] = useState("");
   const [newPetBreed, setNewPetBreed] = useState("");
 
+  const token = localStorage.getItem("authToken");
+
+  const [loading, setLoading] = useState(true);
+
   // ✅ FETCH DATA FROM DJANGO API
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/profile/", {
-      headers: {
-        Authorization: "Token 4bcf8b5139ae23ee396cd2c2e372309bde078bea"
-      }
-    })
-      .then(res => res.json())
-      .then(data => {
+    const initialize = async () => {
+      if (!(await verifyAuthToken(navigate))) return;
+      fetchProfile();
+    };
+    initialize();
+  }, [navigate]);
+
+  const fetchProfile = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/profile/", {
+        headers: {
+          Authorization: `Token ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
         setName(data.first_name || "");
         setEmail(data.email || "");
-      })
-      .catch(err => console.error(err));
-  }, []);
+      } else {
+        logoutAndRedirect(navigate, "Session expired or backend unavailable. Please login again.");
+        return;
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      logoutAndRedirect(navigate, "Unable to connect to server. Please login again once the backend is available.");
+      return;
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/pets/", {
-      headers: {
-        Authorization: "Token 4bcf8b5139ae23ee396cd2c2e372309bde078bea"
-      }
-    })
-      .then(res => res.json())
-      .then(data => {
-        console.log("Pets:", data);
+    if (!token) return;
+    fetchPets();
+  }, [token]);
+
+  const fetchPets = async () => {
+    try {
+      const response = await fetch("/api/pets/", {
+        headers: {
+          Authorization: `Token ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
         setPets(data);
-      })
-      .catch(err => console.error(err));
-  }, []);
+      } else {
+        logoutAndRedirect(navigate, "Session expired or backend unavailable. Please login again.");
+        return;
+      }
+    } catch (error) {
+      console.error("Error fetching pets:", error);
+      logoutAndRedirect(navigate, "Unable to connect to server. Please login again once the backend is available.");
+      return;
+    }
+  };
 
   // ✅ UPDATE DATA TO DJANGO API
-  const handleSave = () => { 
+  const handleSave = async () => {
     
-    fetch("http://127.0.0.1:8000/api/profile/", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Token 4bcf8b5139ae23ee396cd2c2e372309bde078bea"
-      },
-      body: JSON.stringify({
-        first_name: name,
-        last_name: "Updated"
-      })
-    })
-      .then(res => res.json())
-      .then(data => {
+    try {
+      const response = await fetch("/api/profile/", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Token ${token}`
+        },
+        body: JSON.stringify({
+          first_name: name,
+          last_name: "Updated"
+        })
+      });
+      if (response.ok) {
         alert("Profile Updated Successfully!");
-        console.log(data);
-      })
-      .catch(err => console.error(err));
+      } else {
+        alert("Update failed");
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Unable to connect to server. Please check your connection.");
+    }
   };
 
   // ✅ ADD PET
-  const handleAddPet = () => {
-    fetch("http://127.0.0.1:8000/api/pets/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Token 4bcf8b5139ae23ee396cd2c2e372309bde078bea"
-      },
-      body: JSON.stringify({
-        name: newPetName,
-        breed: newPetBreed,
-        age: 1,
-        weight: 1
-      })
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.id) {
-          alert("Pet added successfully!");
-          setPets(prev => [...prev, data]);
-          setNewPetName("");
-          setNewPetBreed("");
-        } else {
-          alert("Error adding pet.");
-        }
-      })
-      .catch(err => console.error(err));
+  const handleAddPet = async () => {
+    try {
+      const response = await fetch("/api/pets/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Token ${token}`
+        },
+        body: JSON.stringify({
+          name: newPetName,
+          breed: newPetBreed,
+          age: 1,
+          weight: 1
+        })
+      });
+      const data = await response.json();
+      if (data.id) {
+        setPets(prev => [...prev, data]);
+        setNewPetName("");
+        setNewPetBreed("");
+        alert("Pet added successfully!");
+      } else {
+        alert("Error adding pet.");
+      }
+    } catch (error) {
+      console.error("Error adding pet:", error);
+      alert("Unable to connect to server. Please check your connection.");
+    }
   };
 
   // ✅ DELETE PET
   const handleDeletePet = (id: number) => {
-    fetch(`http://127.0.0.1:8000/api/pets/${id}/`, {
+    fetch(`/api/pets/${id}/`, {
       method: "DELETE",
       headers: {
-        Authorization: "Token 4bcf8b5139ae23ee396cd2c2e372309bde078bea"
+        Authorization: `Token ${token}`
       }
     })
       .then(() => {
@@ -112,6 +153,12 @@ export default function Profile() {
       <div className="profileCard">
         <h2>Edit Profile</h2>
 
+        {loading && (
+          <div className="loadingMessage">
+            <p>Loading profile...</p>
+          </div>
+        )}
+
         <input
           className="profileInput"
           placeholder="Your Name"
@@ -123,7 +170,7 @@ export default function Profile() {
           className="profileInput"
           placeholder="Email Address"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          disabled
         />
 
         <input

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { verifyAuthToken } from "../utils/auth";
 import Navbar from "../components/Navbar";
 import "../styles/Schedule.css";
 
@@ -19,16 +21,27 @@ interface User {
 }
 
 export default function Schedule() {
+  const navigate = useNavigate();
+  const token = localStorage.getItem("authToken");
   const [logs, setLogs] = useState<FeedingLog[]>([]);
   const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
-    const storedLogs = JSON.parse(localStorage.getItem("feedingLogs") || "[]");
-    const storedUsers = JSON.parse(localStorage.getItem("users") || "[]");
-    
-    setLogs(storedLogs);
-    setUsers(storedUsers);
-  }, []);
+    const initialize = async () => {
+      if (!token || !(await verifyAuthToken(navigate))) return;
+
+      const storedLogs = JSON.parse(localStorage.getItem("feedingLogs") || "[]");
+      const storedUsers = JSON.parse(localStorage.getItem("users") || "[]");
+      setLogs(storedLogs);
+      setUsers(storedUsers);
+    };
+
+    initialize();
+  }, [navigate, token]);
+
+  if (!token) {
+    return null;
+  }
 
   const getUserName = (email: string) => {
     const user = users.find((u) => u.email === email);

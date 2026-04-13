@@ -1,8 +1,13 @@
 import Navbar from "../components/Navbar";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { verifyAuthToken } from "../utils/auth";
 import "../styles/Dashboard.css";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const token = localStorage.getItem("authToken");
+
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalDevices: 0,
@@ -17,65 +22,71 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    // Get all users
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const totalUsers = users.length;
+    const initialize = async () => {
+      if (!token || !(await verifyAuthToken(navigate))) return;
 
-    // Calculate total devices
-    const totalDevices = users.reduce((sum: number, user: any) => sum + (user.deviceCount || 1), 0);
+      // Get all users
+      const users = JSON.parse(localStorage.getItem("users") || "[]");
+      const totalUsers = users.length;
 
-    // Calculate food levels
-    const foodLevels = users.reduce((levels: number[], user: any) => {
-      const userFoodLevels = Array(user.deviceCount || 1).fill(100);
-      return [...levels, ...userFoodLevels];
-    }, []);
-    const avgFoodLevel = foodLevels.length > 0 
-      ? Math.round(foodLevels.reduce((a: number, b: number) => a + b, 0) / foodLevels.length) 
-      : 0;
+      // Calculate total devices
+      const totalDevices = users.reduce((sum: number, user: any) => sum + (user.deviceCount || 1), 0);
 
-    // Get feeding logs
-    const feedingLogs = JSON.parse(localStorage.getItem("feedingLogs") || "[]");
-    const today = new Date().toLocaleDateString();
-    const todayLogs = feedingLogs.filter((log: any) => {
-      const logDate = new Date(log.time).toLocaleDateString();
-      return logDate === today;
-    });
+      // Calculate food levels
+      const foodLevels = users.reduce((levels: number[], user: any) => {
+        const userFoodLevels = Array(user.deviceCount || 1).fill(100);
+        return [...levels, ...userFoodLevels];
+      }, []);
+      const avgFoodLevel = foodLevels.length > 0
+        ? Math.round(foodLevels.reduce((a: number, b: number) => a + b, 0) / foodLevels.length)
+        : 0;
 
-    const feedingEventsToday = todayLogs.length;
-    const successCount = todayLogs.filter((log: any) => log.status === "Success").length;
-    const successRate = feedingEventsToday > 0 
-      ? Math.round((successCount / feedingEventsToday) * 100) 
-      : 0;
+      // Get feeding logs
+      const feedingLogs = JSON.parse(localStorage.getItem("feedingLogs") || "[]");
+      const today = new Date().toLocaleDateString();
+      const todayLogs = feedingLogs.filter((log: any) => {
+        const logDate = new Date(log.time).toLocaleDateString();
+        return logDate === today;
+      });
 
-    // Get last feeding time
-    const lastFeedingTime = feedingLogs.length > 0 
-      ? feedingLogs[0].time.split(" ").slice(-2).join(" ")
-      : "N/A";
+      const feedingEventsToday = todayLogs.length;
+      const successCount = todayLogs.filter((log: any) => log.status === "Success").length;
+      const successRate = feedingEventsToday > 0
+        ? Math.round((successCount / feedingEventsToday) * 100)
+        : 0;
 
-    // Calculate device statuses (simulate based on random + users)
-    const devicesOnline = Math.round(totalDevices * 0.85);
-    const devicesOffline = Math.round(totalDevices * 0.10);
-    const devicesNotWorking = totalDevices - devicesOnline - devicesOffline;
+      // Get last feeding time
+      const lastFeedingTime = feedingLogs.length > 0
+        ? feedingLogs[0].time.split(" ").slice(-2).join(" ")
+        : "N/A";
 
-    // Calculate active schedules
-    const activeSchedules = users.reduce((total: number, user: any) => {
-      const schedules = JSON.parse(localStorage.getItem(`deviceSchedules_${user.email}`) || "[]");
-      return total + schedules.reduce((count: number, device: any[]) => count + (device?.length || 0), 0);
-    }, 0);
+      // Calculate device statuses (simulate based on random + users)
+      const devicesOnline = Math.round(totalDevices * 0.85);
+      const devicesOffline = Math.round(totalDevices * 0.10);
+      const devicesNotWorking = totalDevices - devicesOnline - devicesOffline;
 
-    setStats({
-      totalUsers,
-      totalDevices,
-      feedingEventsToday,
-      successRate,
-      devicesOnline,
-      devicesOffline,
-      devicesNotWorking,
-      avgFoodLevel,
-      lastFeedingTime,
-      activeSchedules
-    });
-  }, []);
+      // Calculate active schedules
+      const activeSchedules = users.reduce((total: number, user: any) => {
+        const schedules = JSON.parse(localStorage.getItem(`deviceSchedules_${user.email}`) || "[]");
+        return total + schedules.reduce((count: number, device: any[]) => count + (device?.length || 0), 0);
+      }, 0);
+
+      setStats({
+        totalUsers,
+        totalDevices,
+        feedingEventsToday,
+        successRate,
+        devicesOnline,
+        devicesOffline,
+        devicesNotWorking,
+        avgFoodLevel,
+        lastFeedingTime,
+        activeSchedules
+      });
+    };
+
+    initialize();
+  }, [navigate, token]);
 
   const StatCard = ({ label, value, color, icon }: any) => (
     <div className="dashboardCard">
