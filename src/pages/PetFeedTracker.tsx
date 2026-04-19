@@ -28,25 +28,68 @@ export default function PetFeedTracker() {
   const [feedLogs, setFeedLogs] = useState<any[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [devices, setDevices] = useState<Device[]>([]);
+
+  interface Device {
+    id: number;
+    name: string;
+    location: string;
+    status: string;
+  }
 
   useEffect(() => {
     const loadLogs = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-        const response = await fetch(`${apiUrl}/logs/`, {
+        setLoading(true);
+        setError(null);
+        
+        // First fetch devices
+        const devicesResponse = await fetch("/api/devices/", {
           headers: {
             'Authorization': `Token ${token}`,
             'Content-Type': 'application/json'
           }
         });
-        if (response.ok) {
-          const data = await response.json();
-          setFeedLogs(data.reverse()); // Most recent first
+
+        if (devicesResponse.ok) {
+          const devicesData = await devicesResponse.json();
+          setDevices(devicesData);
+        }
+
+        // Then fetch logs
+        const logsResponse = await fetch("/api/logs/", {
+          headers: {
+            'Authorization': `Token ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (logsResponse.ok) {
+          const data = await logsResponse.json();
+          // Handle both array response and paginated response
+          const logsArray = Array.isArray(data) ? data : data.results || [];
+          
+          // Convert snake_case from API to camelCase for consistency
+          const normalizedLogs = logsArray.map((log: any) => ({
+            id: log.id,
+            deviceId: log.device_id || log.deviceId,
+            status: log.status || "Success",
+            type: log.feeding_type || log.type || "Regular Feeding",
+            time: formatDate(log.created_at || log.timestamp || log.time),
+            foodAfter: log.food_level_after || log.foodAfter || 0,
+            foodBefore: log.food_level_before || log.foodBefore || 0,
+            amount: log.amount_dispensed || log.amount || 0
+          }));
+          
+          setFeedLogs(normalizedLogs.reverse()); // Most recent first
         } else {
-          console.error("Failed to fetch logs");
+          setError("Failed to fetch feeding logs");
+          console.error("Failed to fetch logs:", logsResponse.status);
         }
       } catch (error) {
         console.error("Error fetching logs:", error);
+        setError("Unable to connect to server");
       } finally {
         setLoading(false);
       }
@@ -64,11 +107,71 @@ export default function PetFeedTracker() {
     return () => clearInterval(interval);
   }, [token]);
 
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return "Unknown";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
   const getDeviceName = (deviceId: number) => {
+    // First try to get from fetched devices
+    const device = devices.find(d => d.id === deviceId);
+    if (device) return device.name;
+    
+    // Fallback to localStorage
     const users = JSON.parse(localStorage.getItem("users") || "[]");
     const userData = users.find((u: any) => u.email === user);
     const petNames = userData?.petNames || [];
     return petNames[deviceId - 1] || `Device ${deviceId}`;
+  };
+
+  const refreshLogs = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const logsResponse = await fetch("/api/logs/", {
+        headers: {
+          'Authorization': `Token ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (logsResponse.ok) {
+        const data = await logsResponse.json();
+        const logsArray = Array.isArray(data) ? data : data.results || [];
+        
+        const normalizedLogs = logsArray.map((log: any) => ({
+          id: log.id,
+          deviceId: log.device_id || log.deviceId,
+          status: log.status || "Success",
+          type: log.feeding_type || log.type || "Regular Feeding",
+          time: formatDate(log.created_at || log.timestamp || log.time),
+          foodAfter: log.food_level_after || log.foodAfter || 0,
+          foodBefore: log.food_level_before || log.foodBefore || 0,
+          amount: log.amount_dispensed || log.amount || 0
+        }));
+        
+        setFeedLogs(normalizedLogs.reverse());
+      } else {
+        setError("Failed to refresh logs");
+      }
+    } catch (error) {
+      console.error("Error refreshing logs:", error);
+      setError("Failed to connect to server");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filteredLogs = selectedDevice
@@ -140,7 +243,36 @@ export default function PetFeedTracker() {
 
         {/* Feed History */}
         <div className="userCard">
-          <h3>Feeding History</h3>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
+            <h3>Feeding History</h3>
+            <button
+              onClick={refreshLogs}
+              disabled={loading}
+              style={{
+                padding: "8px 16px",
+                background: "#2aa8a1",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: loading ? "not-allowed" : "pointer",
+                opacity: loading ? 0.6 : 1
+              }}
+            >
+              {loading ? "Refreshing..." : "Refresh"}
+            </button>
+          </div>
+
+          {error && (
+            <div style={{
+              padding: "12px",
+              background: "#fee2e2",
+              color: "#991b1b",
+              borderRadius: "4px",
+              marginBottom: "15px"
+            }}>
+              ⚠️ {error}
+            </div>
+          )}
 
           {loading ? (
             <p style={{ textAlign: "center", color: "#666", padding: "20px" }}>
@@ -154,7 +286,7 @@ export default function PetFeedTracker() {
             <div style={{ maxHeight: "500px", overflowY: "auto" }}>
               {filteredLogs.map((log, index) => (
                 <div
-                  key={index}
+                  key={log.id || index}
                   style={{
                     padding: "15px",
                     marginBottom: "10px",
@@ -179,13 +311,18 @@ export default function PetFeedTracker() {
                     </span>
                   </div>
 
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ color: "#666" }}>
-                      {log.type} • {log.time}
-                    </span>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                     <span style={{ color: "#666", fontSize: "14px" }}>
-                      Food Level: {log.foodAfter}%
+                      {log.type}
                     </span>
+                    <span style={{ color: "#666", fontSize: "12px" }}>
+                      {log.time}
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", color: "#666", fontSize: "13px" }}>
+                    <span>Food Level: {log.foodBefore}% → {log.foodAfter}%</span>
+                    {log.amount > 0 && <span>Amount: {log.amount}g</span>}
                   </div>
                 </div>
               ))}

@@ -19,8 +19,6 @@ export default function Devices() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [discoveredDevices, setDiscoveredDevices] = useState<Device[]>([]);
   const [scanning, setScanning] = useState(false);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newDevice, setNewDevice] = useState({ name: "", location: "" });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -71,6 +69,33 @@ export default function Devices() {
     setScanning(false);
   };
 
+  const loadExampleDevices = () => {
+    const exampleDevices: Device[] = [
+      {
+        name: "Living Room Feeder",
+        location: "Living Room",
+        status: "active",
+        ip_address: "192.168.1.100",
+        mac_address: "00:1A:2B:3C:4D:5E"
+      },
+      {
+        name: "Kitchen Feeder",
+        location: "Kitchen",
+        status: "active",
+        ip_address: "192.168.1.101",
+        mac_address: "00:1A:2B:3C:4D:5F"
+      },
+      {
+        name: "Bedroom Feeder",
+        location: "Bedroom",
+        status: "active",
+        ip_address: "192.168.1.102",
+        mac_address: "00:1A:2B:3C:4D:60"
+      }
+    ];
+    setDiscoveredDevices(exampleDevices);
+  };
+
   const addDevice = async (device: Device) => {
     try {
       const response = await fetch("/api/devices/", {
@@ -95,16 +120,6 @@ export default function Devices() {
     }
   };
 
-  const addManualDevice = async () => {
-    if (!newDevice.name || !newDevice.location) {
-      alert("Please fill in all fields");
-      return;
-    }
-    await addDevice({ ...newDevice, status: "active" });
-    setNewDevice({ name: "", location: "" });
-    setShowAddForm(false);
-  };
-
   return (
     <div className="dashboardWrapper">
       <div className="dashboardContainer">
@@ -114,8 +129,8 @@ export default function Devices() {
           <button className="actionButton" onClick={scanForDevices} disabled={scanning}>
             {scanning ? "Scanning..." : "Scan WiFi Network"}
           </button>
-          <button className="actionButton" onClick={() => setShowAddForm(!showAddForm)}>
-            Add Device Manually
+          <button className="actionButton" onClick={loadExampleDevices} style={{ background: "#6b7280" }}>
+            Load Example
           </button>
           <button className="backButton" onClick={() => navigate("/user")}>
             Back to Dashboard
@@ -126,26 +141,6 @@ export default function Devices() {
       {loading && (
         <div className="loadingMessage">
           <p>Loading devices...</p>
-        </div>
-      )}
-
-      {showAddForm && (
-        <div className="addDeviceForm">
-          <h3>Add New Device</h3>
-          <input
-            type="text"
-            placeholder="Device Name"
-            value={newDevice.name}
-            onChange={(e) => setNewDevice(prev => ({ ...prev, name: e.target.value }))}
-          />
-          <input
-            type="text"
-            placeholder="Location"
-            value={newDevice.location}
-            onChange={(e) => setNewDevice(prev => ({ ...prev, location: e.target.value }))}
-          />
-          <button onClick={addManualDevice}>Add Device</button>
-          <button onClick={() => setShowAddForm(false)}>Cancel</button>
         </div>
       )}
 
