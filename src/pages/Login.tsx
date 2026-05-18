@@ -31,7 +31,11 @@ export default function Login() {
         localStorage.setItem("authToken", data.token);
         localStorage.setItem("currentUser", data.username);
         localStorage.setItem("role", data.role || "user");
-        navigate("/user");
+        if (data.role === "admin") {
+          navigate("/dashboard");
+        } else {
+          navigate("/user");
+        }
       } else {
         setError(data.error || "Login failed, please try again.");
       }
@@ -50,8 +54,8 @@ export default function Login() {
 
         <input
           className="input"
-          type="email"
-          placeholder="Email Address"
+          type="text"
+          placeholder="Username or Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />

@@ -38,7 +38,7 @@ export const verifyAuthToken = async (navigate: NavigateFunction): Promise<boole
     return true;
   } catch (error) {
     console.error("Auth validation failed:", error);
-    logoutAndRedirect(navigate, "Unable to connect to server. Please login again once the backend is available.");
+    logoutAndRedirect(navigate);
     return false;
   }
 };

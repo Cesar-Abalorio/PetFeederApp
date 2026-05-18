@@ -45,7 +45,7 @@ export default function Profile() {
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
-      logoutAndRedirect(navigate, "Unable to connect to server. Please login again once the backend is available.");
+      logoutAndRedirect(navigate);
       return;
     }
     setLoading(false);
@@ -72,7 +72,7 @@ export default function Profile() {
       }
     } catch (error) {
       console.error("Error fetching pets:", error);
-      logoutAndRedirect(navigate, "Unable to connect to server. Please login again once the backend is available.");
+      logoutAndRedirect(navigate);
       return;
     }
   };

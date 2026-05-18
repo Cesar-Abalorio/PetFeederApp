@@ -44,7 +44,7 @@ export default function Devices() {
       }
     } catch (error) {
       console.error("Error fetching devices:", error);
-      logoutAndRedirect(navigate, "Unable to connect to server. Please login again once the backend is available.");
+      logoutAndRedirect(navigate);
       return;
     }
     setLoading(false);

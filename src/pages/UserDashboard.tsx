@@ -35,7 +35,7 @@ export default function UserDashboard() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [schedules, setSchedules] = useState<FeedingSchedule[]>([]);
   const [scheduleInputs, setScheduleInputs] = useState<{[key: number]: string}>({});
-  const [notifications, setNotifications] = useState<string[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -76,9 +76,21 @@ export default function UserDashboard() {
           // TODO: Use feedingLogs state if we add logs display to dashboard
         }
 
+        // Fetch notifications from backend
+        const notesResponse = await fetch(`${apiUrl}/notifications/`, {
+          headers: {
+            'Authorization': `Token ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (notesResponse.ok) {
+          const notesData = await notesResponse.json();
+          setNotifications(notesData || []);
+        }
+
       } catch (error) {
         console.error('Error fetching data:', error);
-        logoutAndRedirect(navigate, 'Unable to connect to server. Please login again once the backend is available.');
+        logoutAndRedirect(navigate);
         return;
       } finally {
         setLoading(false);
@@ -110,9 +122,76 @@ export default function UserDashboard() {
     return () => clearInterval(interval);
   }, [schedules, lastFedTimes]);
 
-  // Add Notification
-  const addNotification = (message: string) => {
-    setNotifications((prev) => [message, ...prev]);
+  // Add Notification (persist to backend)
+  const addNotification = async (message: string) => {
+    try {
+      const resp = await fetch(`${apiUrl}/notifications/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Token ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message })
+      });
+      if (resp.ok) {
+        const note = await resp.json();
+        setNotifications((prev) => [note, ...prev]);
+      } else {
+        // Fallback to local only if API fails
+        setNotifications((prev) => [{ message, timestamp: new Date().toISOString() }, ...prev]);
+      }
+    } catch (e) {
+      setNotifications((prev) => [{ message, timestamp: new Date().toISOString() }, ...prev]);
+    }
+  };
+
+  const markNotificationRead = async (id: number) => {
+    try {
+      const resp = await fetch(`${apiUrl}/notifications/${id}/`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Token ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ read: true })
+      });
+      if (resp.ok) {
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+      }
+    } catch (e) {
+      console.error('Failed to mark notification read', e);
+    }
+  };
+
+  const deleteNotification = async (id: number) => {
+    try {
+      const resp = await fetch(`${apiUrl}/notifications/${id}/`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Token ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (resp.ok || resp.status === 204) {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+      }
+    } catch (e) {
+      console.error('Failed to delete notification', e);
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    try {
+      // Delete server notifications one by one
+      await Promise.all(notifications.map((n) => fetch(`${apiUrl}/notifications/${n.id}/`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Token ${token}`, 'Content-Type': 'application/json' }
+      })));
+    } catch (e) {
+      console.error('Failed to clear notifications', e);
+    } finally {
+      setNotifications([]);
+    }
   };
 
   const getDeviceName = (deviceId: number) => {
@@ -274,15 +353,31 @@ export default function UserDashboard() {
 
     {showNotifications && (
       <div className="notificationDropdown">
-        <h4>Notifications</h4>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h4 style={{ margin: 0 }}>Notifications</h4>
+          <div>
+            <button onClick={clearAllNotifications} style={{ marginLeft: 8 }}>Clear All</button>
+          </div>
+        </div>
 
         {notifications.length === 0 && (
           <p className="noNotification">No alerts yet.</p>
         )}
 
         {notifications.map((note, index) => (
-          <div key={index} className="notificationItem">
-            {note}
+          <div key={note.id || index} className="notificationItem" style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: note.read ? '400' : '700' }}>{note.message || note}</div>
+              {note.timestamp && (
+                <div style={{ fontSize: '12px', color: '#666' }}>{new Date(note.timestamp).toLocaleString()}</div>
+              )}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {!note.read && (
+                <button onClick={() => markNotificationRead(note.id)} style={{ fontSize: 12 }}>Mark read</button>
+              )}
+              <button onClick={() => deleteNotification(note.id)} style={{ fontSize: 12 }}>Delete</button>
+            </div>
           </div>
         ))}
       </div>

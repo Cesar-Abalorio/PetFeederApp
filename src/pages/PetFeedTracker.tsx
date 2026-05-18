@@ -26,6 +26,7 @@ export default function PetFeedTracker() {
   }
 
   const [feedLogs, setFeedLogs] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +88,22 @@ export default function PetFeedTracker() {
           setError("Failed to fetch feeding logs");
           console.error("Failed to fetch logs:", logsResponse.status);
         }
+
+        // Fetch notifications
+        try {
+          const notesResp = await fetch("/api/notifications/", {
+            headers: {
+              'Authorization': `Token ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          if (notesResp.ok) {
+            const notes = await notesResp.json();
+            setNotifications(notes || []);
+          }
+        } catch (e) {
+          // ignore notification fetch errors
+        }
       } catch (error) {
         console.error("Error fetching logs:", error);
         setError("Unable to connect to server");
@@ -106,6 +123,46 @@ export default function PetFeedTracker() {
 
     return () => clearInterval(interval);
   }, [token]);
+
+    const [showNotifications, setShowNotifications] = useState(false);
+
+  const markNotificationRead = async (id: number) => {
+    try {
+      const resp = await fetch(`/api/notifications/${id}/`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Token ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ read: true })
+      });
+      if (resp.ok) setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    } catch (e) {
+      console.error('Failed to mark notification read', e);
+    }
+  };
+
+  const deleteNotification = async (id: number) => {
+    try {
+      const resp = await fetch(`/api/notifications/${id}/`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Token ${token}`, 'Content-Type': 'application/json' }
+      });
+      if (resp.ok || resp.status === 204) setNotifications(prev => prev.filter(n => n.id !== id));
+    } catch (e) {
+      console.error('Failed to delete notification', e);
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    try {
+      await Promise.all(notifications.map((n) => fetch(`/api/notifications/${n.id}/`, { method: 'DELETE', headers: { 'Authorization': `Token ${token}`, 'Content-Type': 'application/json' } })));
+    } catch (e) {
+      console.error('Failed to clear notifications', e);
+    } finally {
+      setNotifications([]);
+    }
+  };
 
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return "Unknown";
@@ -192,13 +249,49 @@ export default function PetFeedTracker() {
           </div>
 
           <div className="headerRight">
-            <button
-              className="profileButton"
-              onClick={() => navigate("/user")}
-              style={{ background: "#2aa8a1", color: "white" }}
-            >
-              ← Back to Dashboard
-            </button>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <div style={{ position: 'relative' }}>
+                <button
+                  className="profileButton"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  style={{ background: '#fff', color: '#2aa8a1', border: '1px solid #2aa8a1' }}
+                >
+                  🔔 ({notifications.length})
+                </button>
+
+                {showNotifications && (
+                  <div style={{ position: 'absolute', right: 0, top: '36px', background: '#fff', border: '1px solid #e5e7eb', padding: 10, width: 320, zIndex: 50 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h4 style={{ margin: 0 }}>Notifications</h4>
+                      <div>
+                        <button onClick={clearAllNotifications} style={{ marginLeft: 8 }}>Clear All</button>
+                      </div>
+                    </div>
+                    {notifications.length === 0 && <div style={{ color: '#666' }}>No notifications</div>}
+                    {notifications.map((n: any) => (
+                      <div key={n.id} style={{ padding: '6px 0', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between' }}>
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: n.read ? 400 : 700 }}>{n.message}</div>
+                          <div style={{ fontSize: 12, color: '#666' }}>{new Date(n.timestamp).toLocaleString()}</div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          {!n.read && <button onClick={() => markNotificationRead(n.id)} style={{ fontSize: 12 }}>Mark read</button>}
+                          <button onClick={() => deleteNotification(n.id)} style={{ fontSize: 12 }}>Delete</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <button
+                className="profileButton"
+                onClick={() => navigate("/user")}
+                style={{ background: "#2aa8a1", color: "white" }}
+              >
+                ← Back to Dashboard
+              </button>
+            </div>
           </div>
         </div>
 
